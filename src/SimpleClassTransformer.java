@@ -148,7 +148,9 @@ public class SimpleClassTransformer implements ClassFileTransformer {
         
         return null;
     }
-    
+    /**
+     * reads serialized object[] parameters from the last method call and prints them to the screen
+     */
     
     public void testSerlizedParamaters(){
     	try{
