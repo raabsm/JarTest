@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.List;
 import java.io.File;
 import java.io.*;
@@ -11,11 +12,13 @@ import java.io.ObjectOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Modifier;
+import java.security.KeyStore.Entry;
 import java.security.ProtectionDomain;
 import org.apache.commons.io.FileUtils;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
@@ -27,7 +30,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 public class SimpleClassTransformer implements ClassFileTransformer {
-    @Override
+    HashMap<String, String> methodMap = new HashMap<String, String>();
+	
+	@Override
     public byte[] transform( 
             final ClassLoader loader, 
             final String className,
@@ -45,6 +50,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.io.File");
                 classPool.importPackage("java.io.IOException");
                 classPool.importPackage("java.util.Arrays");
+                classPool.importPackage("java.util.ArrayList");
                 
                 final CtClass clazz = classPool.get("sam.SampleClass");
 //                TestClass test = mock(TestClass.class);             
@@ -52,10 +58,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 //                System.out.println(test.add(9,8));
 //                File myfile = new File("src/sam/SampleClass.txt"); 
 //                FileUtils.write(myfile,"this is from JarTest", "UTF8", true);  
-               // CtClass hashClass = ClassPool.getDefault().get("java.util.HashMap");
-               // CtField f = new CtField(hashClass, "methodMap", clazz);
-               // clazz.addField(f);
-
                 String newMethod = "public static void printMethod(String name, Object[] params, String classname){"
                 		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + name + \"| params: \";"
                 		+ "\n System.out.print(printLine);"
@@ -72,28 +74,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
-                	/*CodeAttribute ca = method.getMethodInfo().getCodeAttribute(); 
-                	CodeIterator i = ca.iterator();
-                	while(i.hasNext()){
-                		System.out.println(i.next());
-                	}*/
-//                	CtClass[] types = method.getParameterTypes();
-//                	StringBuilder sb = new StringBuilder();
-//                	
-//                	for(CtClass thisType: types){
-//                		System.out.println("method: " + method.getName() + "  " + thisType.getClass());
-////                		if(thisType.getClass() == javassist.CtPrimitiveType.class){
-////                			System.out.println("primitive");
-////                		}
-//                	}
-//                	MethodInfo methodInfo = method.getMethodInfo();
-//                	LocalVariableAttribute table = methodInfo.getCodeAttribute().getAttribute(javassist.bytecode.LocalVariableAttribute.tag);
-//                	
-//                	
+                	String serFile = method.getMethodInfo().getName() + ".txt"; 
+                	methodMap.put(serFile, method.getMethodInfo().getName());
+                	
                 	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args; "
-	                             		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"SerializeTest.txt\");"
+	                             		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"" + serFile + "\");"
 	                             		+ "\n ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);"
 	                             		+ "\n objectOutputStream.writeObject(o);"
 	                             		+ "\n objectOutputStream.flush();"
@@ -153,18 +140,22 @@ public class SimpleClassTransformer implements ClassFileTransformer {
      */
     
     public void testSerlizedParamaters(){
-    	try{
-    	FileInputStream fileInputStream= new FileInputStream("SerializeTest.txt");
-	    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
-	    Object[] o = (Object[]) objectInputStream.readObject();
-	    objectInputStream.close(); 
-	    for(Object obj: o){
-	    	System.out.println("printing serialized params + " + obj.toString());
-	    }
+    	for (String key: methodMap.keySet()) {
+    		System.out.println(key);
+	    	try{
+	    	FileInputStream fileInputStream= new FileInputStream(key);
+		    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
+		    Object[] o = (Object[]) objectInputStream.readObject();
+		    for(Object obj: o){
+		    	System.out.println("printing serialized params from " + methodMap.get(key) + ":" + obj.toString());
+		    }
+		    objectInputStream.close(); 
+	    	}
+
+	    	catch(IOException | ClassNotFoundException  c){
+				System.out.println("failed to read file");
+			}
     	}
-    	catch(IOException | ClassNotFoundException  c){
-			System.out.println("failed to read file");
-		}
     	
     }
     /**
