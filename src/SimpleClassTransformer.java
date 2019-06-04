@@ -1,5 +1,5 @@
+import java.util.List;
 import java.io.File;
-
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -36,11 +36,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.io.IOException");
                 classPool.importPackage("java.util.Arrays");
                 final CtClass clazz = classPool.get("sam.SampleClass");
-                TestClass test = mock(TestClass.class);             
-                when(test.add(9, 8)).thenReturn(5);
-                System.out.println(test.add(9,8));
-                File myfile = new File("src/sam/SampleClass.txt"); 
-                FileUtils.write(myfile,"this is from JarTest", "UTF8", true);  
+//                TestClass test = mock(TestClass.class);             
+//                when(test.add(9, 8)).thenReturn(5);
+//                System.out.println(test.add(9,8));
+//                File myfile = new File("src/sam/SampleClass.txt"); 
+//                FileUtils.write(myfile,"this is from JarTest", "UTF8", true);  
                // CtClass hashClass = ClassPool.getDefault().get("java.util.HashMap");
                // CtField f = new CtField(hashClass, "methodMap", clazz);
                // clazz.addField(f);
@@ -85,14 +85,14 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                             		+ "\n String[] paramTypes = new String[o.length];"
 	                             		+ "\n for(int i=0; i<o.length; i++){ "
 	                             		+ "\n 	String paramType = o[i].getClass().getName();"
-	                             		+ "\n	paramType = paramType.replace(\"[L\",\"Array \");" 
+	                             		+ "\n	paramType = paramType.replace(\"[L\",\"Array \").replace(\";\",\"\");" 
 	                             		+ "\n   paramTypes[i] = paramType;"
 	                             		+ "\n   if(paramTypes[i].contains(\"String\") && !paramTypes[i].contains(\"Array\"))"
 	                             		+ "\n   	o[i] = \"\\\"\" + o[i] + \"\\\"\"; }"
 	                             		+ "\n printMethod(nameofCurrMethod, o, \"" + nameOfClass + "\"); "
 	                             		+ "\n System.out.println(Arrays.toString(paramTypes));"
 	                             		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
-	                             		+ "\n FileUtils.write(myfile,\"\\t\" + Arrays.toString(paramTypes), \"UTF8\", true);}");
+	                             		+ "\n FileUtils.write(myfile,\"\\t\" + \"paramtypes\" + Arrays.toString(paramTypes), \"UTF8\", true);}");
 	                    
 	                    
 	                    
@@ -132,19 +132,24 @@ public class SimpleClassTransformer implements ClassFileTransformer {
         
         return null;
     }
-    public void printParameters(CtMethod cm){
-    	MethodInfo methodInfo = cm.getMethodInfo();
-    	CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-    	LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
-    	String[] parameterNames = new String[attr.length()];
-    	int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
-    	for (int index = 0; index < parameterNames.length; index++) {
-    	    try{ 
-    		parameterNames[index] = attr.variableName(index + pos);
-    	     System.out.println(parameterNames[index]);
-    	    }
-    	    catch(Throwable t){
-    	    }
+//
+    public String insertMockCalls(){
+    	String mockCall = "";
+    	boolean ifArray = false;
+    	File myfile = new File("src/sam/SampleClass.txt"); 
+    	try{
+    	List<String> lines = FileUtils.readLines(myfile, "UTF8");
+    	for(String line: lines){
+    		
+    		
+    		
     	}
+    	
+    	}
+    	catch(IOException e){
+    		
+    	}
+    	return mockCall;
+    	
     }
 }

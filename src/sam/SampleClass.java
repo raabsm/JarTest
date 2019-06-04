@@ -10,7 +10,7 @@ public class SampleClass {
         //fetch("http://www.google.com");
         //fetch("http://www.yahoo.com");
         SampleClass.method1("hello", 5);
-        String[] x = {"hejd", "dfsaf", "dsafdsfa"};
+        String[] x = {"hello","goodbye"};
         SampleClass.method2(x, 0, new ExampleClass());
     }
     

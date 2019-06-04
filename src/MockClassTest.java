@@ -19,7 +19,7 @@ public class MockClassTest {
 	
 	@Test
 	public void testPerform(){
-		when(cls.method2(new String[] {"hello", "j", "k"}, 5, new ExampleClass())).thenReturn(new int[]{3,4,5});
+		//when(cls.method2(new String[] {"hello", "j", "k"}, 5, new ExampleClass())).thenReturn(new int[]{3,4,5});
 		when(t.add(9, 8)).thenReturn(6);
 		assertEquals(t.add(80, 8), 1);
 	}
