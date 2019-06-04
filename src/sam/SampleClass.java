@@ -11,12 +11,12 @@ public class SampleClass {
         //fetch("http://www.yahoo.com");
         SampleClass.method1("hello", 5);
         String[] x = {"hello","goodbye"};
-        SampleClass.method2(x, 0, new ExampleClass());
+        SampleClass.method2(x, 0);
     }
     
     public static void method1(String s, int i){
     }
-    public static int[] method2(String[] o, int i, ExampleClass e){
+    public static int[] method2(String[] o, int i){
     	if(i == 1){
     		int[] y = {5,6,7,8};
     		return y;

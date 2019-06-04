@@ -1,7 +1,13 @@
 import java.util.List;
 import java.io.File;
+import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 //this is a test comment
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Modifier;
@@ -33,9 +39,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 final ClassPool classPool = ClassPool.getDefault();
                 classPool.importPackage("java.lang.*");
                 classPool.importPackage("org.apache.commons.io.FileUtils");
+                classPool.importPackage("java.io.Serializable");
+                classPool.importPackage("java.io.FileOutputStream");
+                classPool.importPackage("java.io.ObjectOutputStream");
                 classPool.importPackage("java.io.File");
                 classPool.importPackage("java.io.IOException");
                 classPool.importPackage("java.util.Arrays");
+                
                 final CtClass clazz = classPool.get("sam.SampleClass");
 //                TestClass test = mock(TestClass.class);             
 //                when(test.add(9, 8)).thenReturn(5);
@@ -83,6 +93,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args; "
+	                             		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"SerializeTest.txt\");"
+	                             		+ "\n ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);"
+	                             		+ "\n objectOutputStream.writeObject(o);"
+	                             		+ "\n objectOutputStream.flush();"
+	                             		+ "\n objectOutputStream.close();"
 	                             		+ "\n String[] paramTypes = new String[o.length];"
 	                             		+ "\n for(int i=0; i<o.length; i++){ "
 	                             		+ "\n 	String paramType = o[i].getClass().getName();"
@@ -124,7 +139,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 }
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
-                
+                testSerlizedParamaters();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();
@@ -133,7 +148,27 @@ public class SimpleClassTransformer implements ClassFileTransformer {
         
         return null;
     }
-//
+    
+    
+    public void testSerlizedParamaters(){
+    	try{
+    	FileInputStream fileInputStream= new FileInputStream("SerializeTest.txt");
+	    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
+	    Object[] o = (Object[]) objectInputStream.readObject();
+	    objectInputStream.close(); 
+	    for(Object obj: o){
+	    	System.out.println("printing serialized params + " + obj.toString());
+	    }
+    	}
+    	catch(IOException | ClassNotFoundException  c){
+			System.out.println("failed to read file");
+		}
+    	
+    }
+    /**
+     * reads class.txt file and initializes mock calls
+     * @return mock call 
+     */
     public String insertMockCalls(){
     	String mockCall = "";
     	boolean ifArray = false;
