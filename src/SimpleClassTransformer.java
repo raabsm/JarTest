@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.io.File;
 import java.io.*;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 public class SimpleClassTransformer implements ClassFileTransformer {
-    HashMap<String, String> methodMap = new HashMap<String, String>();
+    HashSet<String> methodTable = new HashSet<String>();
 	
 	@Override
     public byte[] transform( 
@@ -70,13 +70,16 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
                 
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
-
+                int counter = 0;
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
-                	String serFile = method.getMethodInfo().getName() + ".txt"; 
-                	methodMap.put(serFile, method.getMethodInfo().getName());
-                	
+                	String nameOfMethod = method.getMethodInfo().getName();
+                	if(methodTable.contains(nameOfMethod)){
+                		nameOfMethod = nameOfMethod + counter++;
+                	}
+                	String serFile =  nameOfMethod+ ".txt"; 
+                	methodTable.add(serFile);
                 	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args; "
@@ -136,18 +139,21 @@ public class SimpleClassTransformer implements ClassFileTransformer {
         return null;
     }
     /**
-     * reads serialized object[] parameters from the last method call and prints them to the screen
+     * Reads through the map of method files that contain serialized parameters and prints those parameters
      */
     
     public void testSerlizedParamaters(){
-    	for (String key: methodMap.keySet()) {
+    	for (String key: methodTable) {
     		System.out.println(key);
+    		File f = new File(key);
+    		if(f.length() == 0)
+    			continue;
 	    	try{
 	    	FileInputStream fileInputStream= new FileInputStream(key);
 		    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
 		    Object[] o = (Object[]) objectInputStream.readObject();
 		    for(Object obj: o){
-		    	System.out.println("printing serialized params from " + methodMap.get(key) + ":" + obj.toString());
+		    	System.out.println("printing serialized params from " + key + ":" + obj.toString());
 		    }
 		    objectInputStream.close(); 
 	    	}
