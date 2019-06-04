@@ -39,7 +39,8 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 TestClass test = mock(TestClass.class);             
                 when(test.add(9, 8)).thenReturn(5);
                 System.out.println(test.add(9,8));
-//                
+                File myfile = new File("src/sam/SampleClass.txt"); 
+                FileUtils.write(myfile,"this is from JarTest", "UTF8", true);  
                // CtClass hashClass = ClassPool.getDefault().get("java.util.HashMap");
                // CtField f = new CtField(hashClass, "methodMap", clazz);
                // clazz.addField(f);

@@ -1,7 +1,7 @@
 
-public interface TestClass {
+public class TestClass {
 
-	public int add(int i, int j);
+	public int add(int i, int j){return 5;}
 	
 	
 }

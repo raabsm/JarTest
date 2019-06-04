@@ -1,11 +1,3 @@
-
-class name: sam.SampleClass| methodName: method1| params: [hello, 5]	[java.lang.String, java.lang.Integer]
-class name: sam.SampleClass| methodName: method2| params: [[hejd, dfsaf, dsafdsfa], 0]	[Array java.lang.String;, java.lang.Integer]
-
-
-new Object(["hello",5],["goodby",10]);
-
+this is from JarTest
 class name: sam.SampleClass| methodName: method1| params: ["hello", 5]	[java.lang.String, java.lang.Integer]
-class name: sam.SampleClass| methodName: method2| params: [[hejd, dfsaf, dsafdsfa], 0]	[Array java.lang.String;, java.lang.Integer]
-class name: sam.SampleClass| methodName: method1| params: ["hello", 5]	[java.lang.String, java.lang.Integer]
-class name: sam.SampleClass| methodName: method2| params: [[hejd, dfsaf, dsafdsfa], 0]	[Array java.lang.String;, java.lang.Integer]
+class name: sam.SampleClass| methodName: method2| params: [[hejd, dfsaf, dsafdsfa], 0, sam.ExampleClass@216041c]	[Array java.lang.String;, java.lang.Integer, sam.ExampleClass]
