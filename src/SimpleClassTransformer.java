@@ -127,11 +127,14 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                    		+ "\n   System.out.print(Arrays.toString($_));}"
 	                    		+ "\n else{"
 	                    		+ "\n   System.out.print($_);}"
-	                    		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"" + returnFile + "\");"
-	                            + "\n ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);"
-	                            + "\n objectOutputStream.writeObject($_);"
-	                            + "\n objectOutputStream.flush();"
-	                            + "\n objectOutputStream.close();}");
+	                    		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
+	                    		+ "\n for(int i =0; i<$args.length; i++) argsWithReturn[i] = $args[i];"
+	                    		+ "\n argsWithReturn[$args.length] = $_;"
+	                    		+ "\n FileOutputStream fos = new FileOutputStream(\"" + returnFile + "\");"
+	                            + "\n ObjectOutputStream oos = new ObjectOutputStream(fos);"
+	                            + "\n oos.writeObject(argsWithReturn);"
+	                            + "\n oos.flush();"
+	                            + "\n oos.close();}");
                 	}
                 }
                 byte[] byteCode = clazz.toBytecode();
@@ -163,13 +166,22 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 		    	System.out.println("printing serialized params from " + key + ":" + obj.toString());
 		    }
 		    objectInputStream.close(); 
-		    fileInputStream = new FileInputStream(methodMap.get(key));
-		    objectInputStream= new ObjectInputStream(fileInputStream);
-		    Object returnVal = (Object) objectInputStream.readObject();
-		    System.out.println(returnVal);
+		    System.out.println(methodMap.get(key));
+		    FileInputStream fis = new FileInputStream(methodMap.get(key));
+		    ObjectInputStream ois= new ObjectInputStream(fis);
+		    Object[] paramsAndReturn = (Object[]) ois.readObject();
+		    System.out.println(paramsAndReturn.length);
+		    for(Object obj: paramsAndReturn){
+		    	if(obj == null)
+		    		System.out.println("null");
+		    	else
+		    		System.out.println("params and return " + methodMap.get(key) + ":" + obj.toString());
+		    }
+		    ois.close();
 	    	}
 	    	catch(IOException | ClassNotFoundException  c){
-				System.out.println("failed to read file");
+				c.printStackTrace();
+	    		System.out.println("failed to read file");
 			}
     	}
     }

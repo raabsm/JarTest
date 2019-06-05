@@ -9,7 +9,7 @@ public class SampleClass {
     public static void main( String[] xyz ) throws IOException {
         //fetch("http://www.google.com");
         //fetch("http://www.yahoo.com");
-        SampleClass.method1("yowhatsup", 5);
+        SampleClass.method1("yowhatsupsam", 5);
         String[] x = {"hello","goodbye"};
         SampleClass.method2(x, 0);
     }
