@@ -9,21 +9,21 @@ public class SampleClass {
     public static void main( String[] xyz ) throws IOException {
         //fetch("http://www.google.com");
         //fetch("http://www.yahoo.com");
-        SampleClass.method1("yowhatsupsam", 5);
+        SampleClass.method1("yo", 70);
         String[] x = {"hello","goodbye"};
         SampleClass.method2(x, 0);
     }
     
-    public static void method1(String s, int i){
+    public static void method1(String s, int y){
     }
-    public static int[] method2(String[] o, int i){
+    public static int method2(String[] o, int i){
     	if(i == 1){
     		int[] y = {5,6,7,8};
-    		return y;
+    		return 6;
     	}
     	else{
     		int[] x = {1,2,3,4};
-    		return x;
+    		return 7;
     	}
     }
     private static void fetch(final String address) 

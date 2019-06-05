@@ -21,6 +21,7 @@ import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
+import javassist.CtPrimitiveType;
 import javassist.NotFoundException;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.LocalVariableAttribute;
@@ -81,6 +82,15 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	String paramFile =  nameOfMethod+ ".txt"; 
 
                 	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
+                		if(method.getReturnType() instanceof CtPrimitiveType){
+                			CtPrimitiveType type = (CtPrimitiveType) method.getReturnType();
+                			System.out.println(nameOfMethod + " primitive test " + type.getWrapperName());
+                		}
+                		else{
+                			System.out.println(nameOfMethod + " class test " +  method.getReturnType().getName());
+                			
+                		}
+                		
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
 	                             		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"" + paramFile + "\");"
@@ -121,25 +131,26 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                    }
 	                    String returnFile = nameOfMethod + "return.txt";
 	                    methodMap.put(paramFile, returnFile);
-	                    method.insertAfter("{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
-	                    		+ "\n if($_!=null) System.out.println($_.getClass().getName());"
+	                    String string = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
+	                    //		+ "\n if($_!=null) System.out.println($_.getClass().getName());"
 	                    		+ "\n if(" + inStatement + "){" 
 	                    		+ "\n   System.out.print(Arrays.toString($_));}"
 	                    		+ "\n else{"
-	                    		+ "\n   System.out.print($_);}"
-	                    		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
+	                    		+ "\n   System.out.print($_);}}";
+	               /*     		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
 	                    		+ "\n for(int i =0; i<$args.length; i++) argsWithReturn[i] = $args[i];"
 	                    		+ "\n argsWithReturn[$args.length] = $_;"
 	                    		+ "\n FileOutputStream fos = new FileOutputStream(\"" + returnFile + "\");"
 	                            + "\n ObjectOutputStream oos = new ObjectOutputStream(fos);"
 	                            + "\n oos.writeObject(argsWithReturn);"
 	                            + "\n oos.flush();"
-	                            + "\n oos.close();}");
+	                            + "\n oos.close();}";*/
+	                    method.insertAfter(string);
                 	}
                 }
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
-                testSerlizedParamaters();
+               // testSerlizedParamaters();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();
