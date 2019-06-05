@@ -82,14 +82,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	String paramFile =  nameOfMethod+ ".txt"; 
 
                 	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
-                		if(method.getReturnType() instanceof CtPrimitiveType){
-                			CtPrimitiveType type = (CtPrimitiveType) method.getReturnType();
-                			System.out.println(nameOfMethod + " primitive test " + type.getWrapperName());
-                		}
-                		else{
-                			System.out.println(nameOfMethod + " class test " +  method.getReturnType().getName());
-                			
-                		}
                 		
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
@@ -110,17 +102,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                             		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
 	                             		+ "\n FileUtils.write(myfile,\"\\t\" + \"paramtypes\" + Arrays.toString(paramTypes), \"UTF8\", true);}");
 	                    
-	                    
-	                    
-	          /*          + "\n System.out.print(\"class name: \" + classname + \"| methodName: \" + name + \"| params: \");"
-                		+ "\n for(int i = 0; i< params.length; i++){"
-                		+ "\n int[] x = {1,2,3,4,5};"
-                		+ "\n if(params[i].getClass().isArray()){"
-                		+ "\n 	System.out.println(Arrays.toString(params[i]));}"
-                		+ "\n else{System.out.print(\" \" + params[i].getClass().getName() + \" \" + params[i] + \",\");}"
-                		+ "\n }"
-                		+ "\n }"*/
-	                    
 	                    boolean ifReturnsArray = method.getReturnType().isArray();
 	                    String inStatement;
 	                    if(ifReturnsArray){
@@ -130,27 +111,41 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                    	inStatement = "false";
 	                    }
 	                    String returnFile = nameOfMethod + "return.txt";
+	                    String wrapper = "";
+	                    System.out.println(returnFile);
 	                    methodMap.put(paramFile, returnFile);
+//	                    if(method.getReturnType() instanceof CtPrimitiveType){
+//                			CtPrimitiveType type = (CtPrimitiveType) method.getReturnType();
+//                			if(!type.getWrapperName().equals("java.lang.Void")){
+//                			System.out.println(nameOfMethod + " primitive test " + type.getWrapperName());
+//                			wrapper = "(" + type.getWrapperName().replace("java.lang.", "") + ")";
+//                			//wrapper = "(Object)";
+//                			}
+//                		}
+//                		else{
+//                			System.out.println(nameOfMethod + " class test " +  method.getReturnType().getName());
+//                		}
 	                    String string = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
-	                    //		+ "\n if($_!=null) System.out.println($_.getClass().getName());"
+	                    	//	+ "\n if($_!=null) System.out.println($_.getClass().getName());"
 	                    		+ "\n if(" + inStatement + "){" 
 	                    		+ "\n   System.out.print(Arrays.toString($_));}"
 	                    		+ "\n else{"
-	                    		+ "\n   System.out.print($_);}}";
-	               /*     		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
+	                    		+ "\n   System.out.print($_);}"
+	                    		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
 	                    		+ "\n for(int i =0; i<$args.length; i++) argsWithReturn[i] = $args[i];"
-	                    		+ "\n argsWithReturn[$args.length] = $_;"
+	                    		+ "\n argsWithReturn[$args.length] = ($w)$_;"
 	                    		+ "\n FileOutputStream fos = new FileOutputStream(\"" + returnFile + "\");"
 	                            + "\n ObjectOutputStream oos = new ObjectOutputStream(fos);"
 	                            + "\n oos.writeObject(argsWithReturn);"
 	                            + "\n oos.flush();"
-	                            + "\n oos.close();}";*/
+	                            + "\n oos.close();}";
 	                    method.insertAfter(string);
+	                    wrapper = "";
                 	}
                 }
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
-               // testSerlizedParamaters();
+                testSerlizedParamaters();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();

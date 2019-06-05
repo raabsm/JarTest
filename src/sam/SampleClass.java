@@ -16,14 +16,14 @@ public class SampleClass {
     
     public static void method1(String s, int y){
     }
-    public static int method2(String[] o, int i){
+    public static int[] method2(String[] o, int i){
     	if(i == 1){
     		int[] y = {5,6,7,8};
-    		return 6;
+    		return y;
     	}
     	else{
     		int[] x = {1,2,3,4};
-    		return 7;
+    		return x;
     	}
     }
     private static void fetch(final String address) 
