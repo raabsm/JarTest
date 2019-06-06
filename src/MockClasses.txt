@@ -1,0 +1,26 @@
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+{import_statement}
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class MockClassTest {
+	
+	{className} cls;
+	@Before
+	public void setUp(){
+
+		cls = mock({className}.class);
+		
+	}
+	
+	@Test
+	public void testPerform(){
+		{mockcalls}
+
+		
+	}
+	
+}
