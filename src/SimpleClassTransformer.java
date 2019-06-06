@@ -1,38 +1,25 @@
-import java.util.HashMap;
-import java.util.List;
 import java.io.File;
-import java.io.*;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 //this is a test comment
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.reflect.Modifier;
-import java.security.KeyStore.Entry;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import org.apache.commons.io.FileUtils;
+
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
-import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
-import javassist.CtPrimitiveType;
 import javassist.NotFoundException;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.LocalVariableAttribute;
-import javassist.bytecode.MethodInfo;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 public class SimpleClassTransformer implements ClassFileTransformer {
     HashMap<String, String> methodMap = new HashMap<String, String>();
-	
+    String nameOfClass;
 	@Override
     public byte[] transform( 
             final ClassLoader loader, 
@@ -42,6 +29,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
             final byte[] classfileBuffer ) throws IllegalClassFormatException {
         if ("sam/SampleClass".equals(className)) {
             try {
+            	nameOfClass = className;
                 final ClassPool classPool = ClassPool.getDefault();
                 classPool.importPackage("java.lang.*");
                 classPool.importPackage("org.apache.commons.io.FileUtils");
@@ -67,7 +55,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
                 		+ "\n FileUtils.write(myfile,\"\\n\" + printLine + paramsToString, \"UTF8\", true);"
                 		+ "\n }";
-           //     String newMethod = "public static void printMethod(String name, Object param, String classname, boolean isArray{";
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
                 
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
@@ -145,7 +132,8 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 }
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
-                testSerlizedParamaters();
+                //testSerlizedParamaters();
+                seeIfReadFile();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();
@@ -154,13 +142,27 @@ public class SimpleClassTransformer implements ClassFileTransformer {
         
         return null;
     }
+	
+	public void seeIfReadFile(){
+		File inputFile = new File("src/sam/SampleClass.txt"); 
+    	try{
+    		String test = FileUtils.readFileToString(inputFile, "UTF8");	
+    		System.out.println("reading file: " + test);
+    	}
+    	catch(IOException e){
+    		
+    	}
+	}
+	
+	
+	
     /**
      * Reads through the map of method files that contain serialized parameters and prints those parameters
      */
     
     public void testSerlizedParamaters(){
     	for (String key: methodMap.keySet()) {
-    		System.out.println(key);
+    		System.out.println("name of class: " + nameOfClass);
     		File f = new File(key);
     		if(f.length() == 0)
     			continue;
@@ -197,19 +199,15 @@ public class SimpleClassTransformer implements ClassFileTransformer {
      */
     public String insertMockCalls(){
     	String mockCall = "";
+    	String mockClass = "";
+    	ArrayList<String> paramTypes = new ArrayList<>();
+    	String returnType = "";
     	boolean ifArray = false;
-    	File myfile = new File("src/sam/SampleClass.txt"); 
+    	File inputFile = new File("src/MockClasses.txt"); 
     	try{
-    	List<String> lines = FileUtils.readLines(myfile, "UTF8");
-    	for(String line: lines){
-    		if(line.length()>0){
-    			
-    			
-    			
-    			
-    		}
-    	}
-    	
+    		mockClass = FileUtils.readFileToString(inputFile, "UTF8");	
+    		mockClass.replace("{import_statement}", nameOfClass.replace("/", "."));
+    		mockClass.replace("{classname}", nameOfClass.substring(nameOfClass.lastIndexOf(".")));
     	}
     	catch(IOException e){
     		

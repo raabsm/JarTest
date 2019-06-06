@@ -1,10 +1,11 @@
-import sam.ExampleClass;
-import sam.SampleClass;
 import static org.junit.Assert.assertEquals;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.junit.*;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import sam.SampleClass;
 public class MockClassTest {
 
 	int x;
