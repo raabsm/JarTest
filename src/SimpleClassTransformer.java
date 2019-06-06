@@ -47,13 +47,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 //                System.out.println(test.add(9,8));
 //                File myfile = new File("src/sam/SampleClass.txt"); 
 //                FileUtils.write(myfile,"this is from JarTest", "UTF8", true);  
-                String newMethod = "public static void printMethod(String name, Object[] params, String classname){"
-                		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + name + \"| params: \";"
-                		+ "\n System.out.print(printLine);"
-                		+ "\n String paramsToString = Arrays.deepToString(params);"
-                		+ "\n System.out.print(paramsToString);"
+                String newMethod = "public static void printMethodToFile(String methodname, Object[] params, String[] paramCasts, String classname, String returnCast, String serFile, String serFileReturn, String numParams){"
+                		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + methodname + \"| params: \" + Arrays.deepToString(params);"
+                		+ "\n printLine += \"|param casts: \" + Arrays.toString(paramCasts) + \"|numParams: \" + numParams;"
+                		+ "\n printLine += \"|serFile \" + serFile + \"|serFileReturn: \" + serFileReturn  + \"|returnCast: \" + returnCast;"
+                		+ "\n System.out.println(printLine);"
                 		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
-                		+ "\n FileUtils.write(myfile,\"\\n\" + printLine + paramsToString, \"UTF8\", true);"
+                		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
                 		+ "\n }";
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
                 
@@ -63,13 +63,56 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();
-                	if(methodMap.containsKey(nameOfMethod)){
-                		nameOfMethod = nameOfMethod + counter++;
-                	}
-                	String paramFile =  nameOfMethod+ ".txt"; 
+ 
 
-                	if(!"printMethod".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
+                	if(!"printMethodToFile".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
+                    	
+                    	String paramFile =  nameOfMethod+ ".txt";
+                    	
+                    	boolean ifReturnsArray = method.getReturnType().isArray();
+   	                    String inStatement;
+   	                    if(ifReturnsArray){
+   	                    	inStatement = "true";
+   	                    }
+   	                    else{
+   	                    	inStatement = "false";
+   	                    }
+   	                    if(methodMap.containsKey(paramFile)){
+	                 		paramFile = counter++ + paramFile;
+                 	}
+   	                    String returnFile = "return" + paramFile;
+   	                    String wrapper = "";
+   	                    methodMap.put(paramFile, returnFile);
+   	                   
+                    	
+                    	String returnWrapper = "";
+//                		if(method.getReturnType() instanceof CtPrimitiveType){
+//                 			CtPrimitiveType type = (CtPrimitiveType) method.getReturnType();
+//                 			if(!type.getWrapperName().equals("java.lang.Void")){
+//                 				returnWrapper = "(" + type.getWrapperName().replace("java.lang.", "") + ")";
+//                 			}
+//                 		}
+                 	//	else{
+                 			//System.out.println(nameOfMethod + " class test " +  method.getReturnType().getName());
+                 		//}
+             			returnWrapper = method.getReturnType().getName();
+             			returnWrapper = returnWrapper.substring(returnWrapper.lastIndexOf(".")+1);
+             			returnWrapper = "(" + returnWrapper + ")";
                 		
+                		ArrayList<String> paramWrappers = new ArrayList<>();
+                		CtClass[] paramTypeWrappers = method.getParameterTypes();
+                		for(CtClass c: paramTypeWrappers){
+                			String paramWrapper = c.getName();
+                 			paramWrapper = paramWrapper.substring(paramWrapper.lastIndexOf(".")+1);
+                 			paramWrapper = "(" + paramWrapper + ")";
+                 			paramWrappers.add(paramWrapper);
+                		}
+                		
+                		StringBuilder sb = new StringBuilder("new String[] {");
+                		for(int i = 0; i<paramWrappers.size()-1; i++){
+                			sb.append("\"" + paramWrappers.get(i) + "\",");
+                		}
+                		sb.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
 	                             		+ "\n FileOutputStream fileOutputStream = new FileOutputStream(\"" + paramFile + "\");"
@@ -77,47 +120,18 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                             		+ "\n objectOutputStream.writeObject(o);"
 	                             		+ "\n objectOutputStream.flush();"
 	                             		+ "\n objectOutputStream.close();"
-	                             		+ "\n String[] paramTypes = new String[o.length];"
-	                             		+ "\n for(int i=0; i<o.length; i++){ "
-	                             		+ "\n 	String paramType = o[i].getClass().getName();"
-	                             		+ "\n	paramType = paramType.replace(\"[L\",\"Array \").replace(\";\",\"\");" 
-	                             		+ "\n   paramTypes[i] = paramType;"
-	                             		+ "\n   if(paramTypes[i].contains(\"String\") && !paramTypes[i].contains(\"Array\"))"
-	                             		+ "\n   	o[i] = \"\\\"\" + o[i] + \"\\\"\"; }"
-	                             		+ "\n printMethod(nameofCurrMethod, o, \"" + nameOfClass + "\"); "
-	                             		+ "\n System.out.println(Arrays.toString(paramTypes));"
-	                             		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
-	                             		+ "\n FileUtils.write(myfile,\"\\t\" + \"paramtypes\" + Arrays.toString(paramTypes), \"UTF8\", true);}");
+	                             		+ "\n printMethodToFile(nameofCurrMethod, o, " + sb.toString() + ", \"" + nameOfClass + "\", \"" + returnWrapper + "\", \"" + paramFile + "\", \"" + returnFile + "\", \"" + paramWrappers.size() + "\"); "
+	                             		+ "\n }");
+	                             		//+ "\n }System.out.println(\"paramTypes form method\" + Arrays.toString(paramTypes));"
 	                    
-	                    boolean ifReturnsArray = method.getReturnType().isArray();
-	                    String inStatement;
-	                    if(ifReturnsArray){
-	                    	inStatement = "true";
-	                    }
-	                    else{
-	                    	inStatement = "false";
-	                    }
-	                    String returnFile = nameOfMethod + "return.txt";
-	                    String wrapper = "";
-	                    System.out.println(returnFile);
-	                    methodMap.put(paramFile, returnFile);
-//	                    if(method.getReturnType() instanceof CtPrimitiveType){
-//                			CtPrimitiveType type = (CtPrimitiveType) method.getReturnType();
-//                			if(!type.getWrapperName().equals("java.lang.Void")){
-//                			System.out.println(nameOfMethod + " primitive test " + type.getWrapperName());
-//                			wrapper = "(" + type.getWrapperName().replace("java.lang.", "") + ")";
-//                			//wrapper = "(Object)";
-//                			}
-//                		}
-//                		else{
-//                			System.out.println(nameOfMethod + " class test " +  method.getReturnType().getName());
-//                		}
 	                    String string = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
-	                    	//	+ "\n if($_!=null) System.out.println($_.getClass().getName());"
+	                    		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
 	                    		+ "\n if(" + inStatement + "){" 
-	                    		+ "\n   System.out.print(Arrays.toString($_));}"
+	                    		+ "\n   System.out.print(Arrays.toString($_));"
+	                    		+ "\n 	FileUtils.write(myfile, \"|return val: \" + Arrays.toString($_) , \"UTF8\", true);}"
 	                    		+ "\n else{"
-	                    		+ "\n   System.out.print($_);}"
+	                    		+ "\n   System.out.print($_);"
+	                    		+ "\n 	FileUtils.write(myfile, \"|return val: \" + $_.toString() , \"UTF8\", true);}"
 	                    		+ "\n Object[] argsWithReturn = new Object[$args.length+1];"
 	                    		+ "\n for(int i =0; i<$args.length; i++) argsWithReturn[i] = $args[i];"
 	                    		+ "\n argsWithReturn[$args.length] = ($w)$_;"
@@ -133,7 +147,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
                 //testSerlizedParamaters();
-                seeIfReadFile();
+                //seeIfReadFile();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();

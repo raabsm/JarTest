@@ -1,7 +1,7 @@
 package sam;
-import java.io.*;
-
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -10,13 +10,17 @@ public class SampleClass {
         //fetch("http://www.google.com");
         //fetch("http://www.yahoo.com");
         SampleClass.method1("yo", 70);
-        String[] x = {"hello","goodbye"};
+        SampleClass.method1(new ExampleClass[] {new ExampleClass()});
+        int[] x = {7,9};
         SampleClass.method2(x, 0);
     }
     
-    public static void method1(String s, int y){
+    public static String method1(String s, int y){ return "5";
     }
-    public static int[] method2(String[] o, int i){
+    public static ExampleClass method1(ExampleClass[] y){
+    	return new ExampleClass();
+    }
+    public static int[] method2(int[] o, int i){
     	if(i == 1){
     		int[] y = {5,6,7,8};
     		return y;
