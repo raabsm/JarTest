@@ -1,8 +1,6 @@
 import java.io.File;
-import java.io.FileInputStream;
 //this is a test comment
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -20,6 +18,19 @@ import javassist.NotFoundException;
 public class SimpleClassTransformer implements ClassFileTransformer {
     HashMap<String, String> methodMap = new HashMap<String, String>();
     String nameOfClass;
+	
+    private String output = "";
+    
+    
+    public String getOutput() {
+		return output;
+	}
+
+	public void setOutput(String output) {
+		if(output!=null)
+			this.output = output;
+	}
+
 	@Override
     public byte[] transform( 
             final ClassLoader loader, 
@@ -52,7 +63,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n printLine += \"|param casts: \" + Arrays.toString(paramCasts) + \"|numParams: \" + numParams;"
                 		+ "\n printLine += \"|serFile \" + serFile + \"|serFileReturn: \" + serFileReturn  + \"|returnCast: \" + returnCast;"
                 		+ "\n System.out.println(printLine);"
-                		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
+                		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
                 		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
                 		+ "\n }";
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
@@ -125,7 +136,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                             		//+ "\n }System.out.println(\"paramTypes form method\" + Arrays.toString(paramTypes));"
 	                    
 	                    String string = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
-	                    		+ "\n File myfile = new File(\"src/sam/SampleClass.txt\");" 
+	                    		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
 	                    		+ "\n if(" + inStatement + "){" 
 	                    		+ "\n   System.out.print(Arrays.toString($_));"
 	                    		+ "\n 	FileUtils.write(myfile, \"|return val: \" + Arrays.toString($_) , \"UTF8\", true);}"
@@ -174,39 +185,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
      * Reads through the map of method files that contain serialized parameters and prints those parameters
      */
     
-    public void testSerlizedParamaters(){
-    	for (String key: methodMap.keySet()) {
-    		System.out.println("name of class: " + nameOfClass);
-    		File f = new File(key);
-    		if(f.length() == 0)
-    			continue;
-	    	try{
-	    	FileInputStream fileInputStream= new FileInputStream(key);
-		    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
-		    Object[] input = (Object[]) objectInputStream.readObject();
-		    for(Object obj: input){
-		    	System.out.println("printing serialized params from " + key + ":" + obj.toString());
-		    }
-		    objectInputStream.close(); 
-		    System.out.println(methodMap.get(key));
-		    FileInputStream fis = new FileInputStream(methodMap.get(key));
-		    ObjectInputStream ois= new ObjectInputStream(fis);
-		    Object[] paramsAndReturn = (Object[]) ois.readObject();
-		    System.out.println(paramsAndReturn.length);
-		    for(Object obj: paramsAndReturn){
-		    	if(obj == null)
-		    		System.out.println("null");
-		    	else
-		    		System.out.println("params and return " + methodMap.get(key) + ":" + obj.toString());
-		    }
-		    ois.close();
-	    	}
-	    	catch(IOException | ClassNotFoundException  c){
-				c.printStackTrace();
-	    		System.out.println("failed to read file");
-			}
-    	}
-    }
     /**
      * reads class.txt file and initializes mock calls
      * @return mock call 

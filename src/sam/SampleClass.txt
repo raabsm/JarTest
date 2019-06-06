@@ -2,3 +2,6 @@
 class name: sam.SampleClass| methodName: method1| params: [yo, 70]|param casts: [(String), (int)]|numParams: 2|serFile method1.txt|serFileReturn: returnmethod1.txt|returnCast: (String)|return val: 5
 class name: sam.SampleClass| methodName: method1| params: [[sam.ExampleClass@22d1ed3e]]|param casts: [(ExampleClass[])]|numParams: 1|serFile 0method1.txt|serFileReturn: return0method1.txt|returnCast: (ExampleClass)|return val: sam.ExampleClass@329cd7cd
 class name: sam.SampleClass| methodName: method2| params: [[7, 9], 0]|param casts: [(int[]), (int)]|numParams: 2|serFile method2.txt|serFileReturn: returnmethod2.txt|returnCast: (int[])|return val: [1, 2, 3, 4]
+class name: sam.SampleClass| methodName: method1| params: [yo, 70]|param casts: [(String), (int)]|numParams: 2|serFile method1.txt|serFileReturn: returnmethod1.txt|returnCast: (String)
+class name: sam.SampleClass| methodName: method1| params: [[sam.ExampleClass@329cd7cd]]|param casts: [(ExampleClass[])]|numParams: 1|serFile 0method1.txt|serFileReturn: return0method1.txt|returnCast: (ExampleClass)
+class name: sam.SampleClass| methodName: method2| params: [[7, 9], 0]|param casts: [(int[]), (int)]|numParams: 2|serFile method2.txt|serFileReturn: returnmethod2.txt|returnCast: (int[])
