@@ -14,10 +14,12 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.CtNewMethod;
+import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 public class SimpleClassTransformer implements ClassFileTransformer {
     HashMap<String, String> methodMap = new HashMap<String, String>();
     String nameOfClass;
+    String allMockCalls = "";
 	
     private String output = "";
     
@@ -27,8 +29,10 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	}
 
 	public void setOutput(String output) {
-		if(output!=null)
+		if(output!=null) {
 			this.output = output;
+			System.out.println("output set to " + output);
+		}
 	}
 
 	@Override
@@ -38,7 +42,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
             final Class<?> classBeingRedefined, 
             final ProtectionDomain protectionDomain,
             final byte[] classfileBuffer ) throws IllegalClassFormatException {
-        if ("sam/SampleClass".equals(className)) {
+        if ("sam/SampleClass".equals(className) || className.startsWith("ibi") || className.startsWith("com/ibi") || className.startsWith("com\\ibi")) {
             try {
             	nameOfClass = className;
                 final ClassPool classPool = ClassPool.getDefault();
@@ -52,7 +56,10 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.util.Arrays");
                 classPool.importPackage("java.util.ArrayList");
                 
-                final CtClass clazz = classPool.get("sam.SampleClass");
+                classPool.appendClassPath(new LoaderClassPath(loader));
+                String classNameWithDots= className.replace("/", ".");
+                
+                final CtClass clazz = classPool.get(classNameWithDots);
 //                TestClass test = mock(TestClass.class);             
 //                when(test.add(9, 8)).thenReturn(5);
 //                System.out.println(test.add(9,8));
@@ -92,7 +99,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                 		paramFile = counter++ + paramFile;
                  	}
    	                    String returnFile = "return" + paramFile;
-   	                    String wrapper = "";
    	                    methodMap.put(paramFile, returnFile);
    	                   
                     	
@@ -152,7 +158,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                            + "\n oos.flush();"
 	                            + "\n oos.close();}";
 	                    method.insertAfter(string);
-	                    wrapper = "";
                 	}
                 }
                 byte[] byteCode = clazz.toBytecode();
@@ -179,17 +184,27 @@ public class SimpleClassTransformer implements ClassFileTransformer {
     	}
 	}
 	
-	
-	
     /**
      * Reads through the map of method files that contain serialized parameters and prints those parameters
      */
-    
+	
+//	
+//	public void addMockCall(String className, String methodName, ArrayList<String> paramWraps, String returnWrap, String serFile){
+//		String MockCall = "\n when(cls." + methodName + "("; 
+//		for(String param: paramWraps){
+//			MockCall +=  param + "map.get(\"" + serFile; //not finished here
+//		}
+//		
+//		
+//		
+//	}
+//	
+//	
     /**
-     * reads class.txt file and initializes mock calls
+     * reads MockClasses.txt file and constructs the final .java testing file
      * @return mock call 
      */
-    public String insertMockCalls(){
+    public String constructClass(){
     	String mockCall = "";
     	String mockClass = "";
     	ArrayList<String> paramTypes = new ArrayList<>();

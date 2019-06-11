@@ -31,7 +31,7 @@ public class SampleClass {
     	}
     }
     private static void fetch(final String address) 
-            throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException {;
  
         final URL url = new URL(address);                
         final URLConnection connection = url.openConnection();

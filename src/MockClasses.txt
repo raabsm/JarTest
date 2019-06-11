@@ -1,19 +1,37 @@
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.awt.List;
+import java.io.File;
+import org.apache.commons.io.FileUtils;
 import java.util.ArrayList;
+import java.util.HashMap;
 {import_statement}
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class MockClassTest {
-	 ArrayList<Object[]> = new ArrayList<Object[]>();
+	 HashMap<String, Object[]> map = new HashMap<String,Object[]>();
+	 
+	 public readDataFile(){
+		 File file = new File({dataFileName});
+		 ArrayList<String> lines = FileUtils.readLines(file, "UTF8");
+		 for(String line: lines){
+			if(line.length() > 0){
+				int beginIndex = line.indexOf("") 
+			}
+		 }
+
+		 
+		 
+	 }
 	 
 	 public void testSerlizedParamaters(){
 	    	while({serFileName}.length() > 0) {
 	    		System.out.println("name of class: " + nameOfClass);
-	    		File f = new File(key);
+	    		File f = new File({serFileName});
 	    		if(f.length() == 0)
 	    			continue;
 		    	try{
