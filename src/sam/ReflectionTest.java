@@ -23,7 +23,8 @@ public class ReflectionTest {
 					fieldValue[0] = 0;
 					e1.printStackTrace();
 				}
-				System.out.println(fields[i].toString() + ", value: " + Arrays.deepToString(fieldValue));
+			String value = Arrays.deepToString(fieldValue); 	
+			System.out.println("Type: " + fields[i].getType().getCanonicalName() + ", Name: " + fields[i].getName() + ", Value: " + value.substring(1,value.length()-1));
 		}
 		Field i;
 //		try {
