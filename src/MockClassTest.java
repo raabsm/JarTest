@@ -1,4 +1,3 @@
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
@@ -26,7 +25,7 @@ public class MockClassTest {
 //      System.out.println(test.add(9,8));
 //      File myfile = new File("src/sam/SampleClass.txt"); 
 //      FileUtils.write(myfile,"this is from JarTest", "UTF8", true); 
-		assertEquals(t.add(80, 8), 1);
+		//assertEquals(t.add(80, 8), 1);
 	}
 	
 }
