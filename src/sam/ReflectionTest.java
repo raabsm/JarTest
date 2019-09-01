@@ -9,6 +9,13 @@ public class ReflectionTest{
 		
 		public static <T> LinkedList<String> inspectObject(T obj){
 			Class c = obj.getClass();
+			System.out.println(c.getSimpleName() + c.getCanonicalName());
+			System.out.println(c);
+			if(c.getCanonicalName().contains("[]")){
+				System.out.println("array");
+				Object object = (Object[])obj;
+				
+			}
 			LinkedList<String> list = new LinkedList<String>();
 			Field[] fields = c.getDeclaredFields();
 			for(int i =0; i< fields.length; i++){

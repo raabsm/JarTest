@@ -43,17 +43,34 @@ public class SimpleClassTransformer implements ClassFileTransformer {
             try {
             	nameOfClass = className;
                 final ClassPool classPool = ClassPool.getDefault();
-                classPool.importPackage("java.lang.*");
+//                classPool.importPackage("java.lang.*");
                 classPool.importPackage("org.apache.commons.io.FileUtils");
                 classPool.importPackage("java.io.File");
                 classPool.importPackage("java.io.IOException");
                 classPool.importPackage("java.util.Arrays");
                 classPool.importPackage("java.util.ArrayList");
+                classPool.importPackage("java.util.LinkedList");
+                classPool.importPackage("java.lang.reflect.Field");
                 
                 classPool.appendClassPath(new LoaderClassPath(loader));
                 String classNameWithDots= className.replace("/", ".");
                 
                 final CtClass clazz = classPool.get(classNameWithDots); 
+                String firstMethod = "public static String[] inspectObject(Object obj){"
+									+ "\n 	Class c = obj.getClass();"
+									+ "\n	Field[] fields = c.getDeclaredFields();"
+									+ "\n	String[] list = new String[fields.length];"
+									+ "\n	for(int i =0; i<fields.length; i++){"
+									+ "\n		Object[] fieldValue = new Object[1];"
+									+ "\n		fields[i].setAccessible(true);"
+									+ "\n		fieldValue[0] = fields[i].get(obj);"
+									+ "\n		String value = Arrays.deepToString(fieldValue);" 	
+									+ "\n		list[i] = \"Type: \" + fields[i].getType().getCanonicalName() + \", Name: \" + fields[i].getName() + \", Value: \" + value.substring(1,value.length()-1);"
+									+ "\n	}"
+									+ "\n	return list;"
+									+ "\n }";
+                clazz.addMethod(CtNewMethod.make(firstMethod, clazz)); 
+                
                 String newMethod = "public static void printMethodToFile(String methodname, Object[] params, String[] paramCasts, String classname, String returnCast, String serFile, String serFileReturn, String numParams){"
                 		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + methodname + \"| params: \" + Arrays.deepToString(params);"
                 		+ "\n printLine += \"|param casts: \" + Arrays.toString(paramCasts) + \"|numParams: \" + numParams;"
@@ -61,6 +78,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n System.out.println(printLine);"
                 		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
                 		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
+                		+ "\n for(int i = 0; i<params.length; i++){"
+                		+ "\n 	String[] list = inspectObject(params[i]);"
+                		+ "\n 	System.out.println(params[i]);"
+                		+ "\n	for(int x= 0; x<list.length; x++) System.out.println(list[x]);"
+                		+ "\n }"
                 		+ "\n }";
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
                 
@@ -69,11 +91,9 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
-                	String nameOfMethod = method.getMethodInfo().getName();
- 
+                	String nameOfMethod = method.getMethodInfo().getName();	
 
-                	if(!"printMethodToFile".equals(method.getMethodInfo().getName())  && !"main".equals(method.getMethodInfo().getName())){
-                    	
+                	if(!"printMethodToFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"inspectObject".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
                     	
                     	boolean ifReturnsArray = method.getReturnType().isArray();
