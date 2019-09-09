@@ -78,11 +78,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n System.out.println(printLine);"
                 		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
                 		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
-                		+ "\n for(int i = 0; i<params.length; i++){"
-                		+ "\n 	String[] list = inspectObject(params[i]);"
-                		+ "\n 	System.out.println(params[i]);"
-                		+ "\n	for(int x= 0; x<list.length; x++) System.out.println(list[x]);"
-                		+ "\n }"
                 		+ "\n }";
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
                 
@@ -132,6 +127,14 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		sb.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
 	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
+	                             		+ "\n for(int i = 0; i<o.length; i++){"
+	                             		+ "\n 	Class c = o[i].getClass();"
+	                             		+ "\n	if(!c.getCanonicalName().contains(\"java\")){"
+	                             		+ "\n		String[] inspection = inspectObject(o[i]);"
+	                             		+ "\n		for(int x=0;x<inspection.length;x++) System.out.println(inspection[x]);"
+	                             		+ "\n	}"
+	                             		+ "\n }"
+	                             		+ "\n inspectObject($args);"
 	                             		+ "\n printMethodToFile(nameofCurrMethod, o, " + sb.toString() + ", \"" + nameOfClass + "\", \"" + returnWrapper + "\", \"" + paramFile + "\", \"" + returnFile + "\", \"" + paramWrappers.size() + "\"); "
 	                             		+ "\n }");
 	                    

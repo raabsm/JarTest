@@ -13,8 +13,6 @@ public class ReflectionTest{
 			System.out.println(c);
 			if(c.getCanonicalName().contains("[]")){
 				System.out.println("array");
-				Object object = (Object[])obj;
-				
 			}
 			LinkedList<String> list = new LinkedList<String>();
 			Field[] fields = c.getDeclaredFields();
