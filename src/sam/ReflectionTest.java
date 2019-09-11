@@ -9,7 +9,7 @@ public class ReflectionTest{
 		
 		public static <T> LinkedList<String> inspectObject(T obj){
 			Class c = obj.getClass();
-			System.out.println(c.getSimpleName() + c.getCanonicalName());
+			System.out.println(c.getSimpleName() + c.getCanonicalName() + c.getComponentType());
 			System.out.println(c);
 			if(c.getCanonicalName().contains("[]")){
 				System.out.println("array");

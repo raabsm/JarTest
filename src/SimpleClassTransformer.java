@@ -71,16 +71,49 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 									+ "\n }";
                 clazz.addMethod(CtNewMethod.make(firstMethod, clazz)); 
                 
+                String ifArrMethod = "public static boolean ifArray(Object obj){"
+								    + "\n 	Class c = obj.getClass();"
+								   	+ "\n	return c.getCanonicalName().contains(\"[]\");}";
+                
+                
+                String printParams = "public static String printParams(Object[] params){"
+                					+ "\n String currResult = \"\";"
+                					+ "\n for(int i = 0; i<params.length; i++){"
+                					+ "\n 	Object param = params[i];"
+                					+ "\n 	String paramSimpleName = param.getClass().getSimpleName();"
+                					+ "\n	if(ifArray(param)){"
+                					+ "\n 		currResult = currResult + \"new \" + paramSimpleName + \" {\" + printParams((Object[])param) + \"}\";"
+                					+ "\n 	 }"
+                					+ "\n 	else{"
+                					+ "\n 		currResult = currResult + printParams(param, paramSimpleName) + \",\";"
+                					+ "\n 	}"
+                					+ "\n }"
+                					+ "\n return currResult;}";
+                
+                
+                String printParam = "public static String printParams(Object param, String paramType){"
+                					+ "\n if(paramType.contains(\"String\")){"
+                					+ "\n 	return \"\\\"\" + param.toString() + \"\\\"\";"
+                					+ "\n }"
+                					+ "\n else if(paramType.contains(\"char\")){"
+                					+ "\n 	return \"\\\'\" + param.toString() + \"\\\'\";}"
+                					+ "\n else{"
+                					+ "\n	return param.toString();}}";
+						
                 String newMethod = "public static void printMethodToFile(String methodname, Object[] params, String[] paramCasts, String classname, String returnCast, String serFile, String serFileReturn, String numParams){"
-                		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + methodname + \"| params: \" + Arrays.deepToString(params);"
+                		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + methodname + \"| params: \" + printParams(params);"
                 		+ "\n printLine += \"|param casts: \" + Arrays.toString(paramCasts) + \"|numParams: \" + numParams;"
                 		+ "\n printLine += \"|serFile \" + serFile + \"|serFileReturn: \" + serFileReturn  + \"|returnCast: \" + returnCast;"
                 		+ "\n System.out.println(printLine);"
                 		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
                 		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
                 		+ "\n }";
+                clazz.addMethod(CtNewMethod.make(printParam, clazz)); 
+                clazz.addMethod(CtNewMethod.make(ifArrMethod, clazz)); 
+                clazz.addMethod(CtNewMethod.make(printParams, clazz)); 
                 clazz.addMethod(CtNewMethod.make(newMethod, clazz)); 
-                
+
+             
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
                 int counter = 0;
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
@@ -88,7 +121,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();	
 
-                	if(!"printMethodToFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"inspectObject".equals(nameOfMethod)){
+                	if(!"printMethodToFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"inspectObject".equals(nameOfMethod) && !"printParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
                     	
                     	boolean ifReturnsArray = method.getReturnType().isArray();
