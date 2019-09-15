@@ -1,0 +1,8 @@
+/bin/
+src/MockClassTest.java 
+src/TestClass.java 
+src/sam/ReflectionTest.java
+.classpath
+.DS_Store
+.project
+.settings*
