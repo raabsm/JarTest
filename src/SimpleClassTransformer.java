@@ -50,9 +50,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.lang.reflect.Field");
                 classPool.importPackage("java.util.Arrays");
                 classPool.importPackage("java.util.List");
-                classPool.importPackage("org.json.simple.JSONObject");
-                classPool.importPackage("org.json.simple.JSONArray");
-                classPool.importPackage("org.json.simple.parser.JSONParser");
+//                classPool.importPackage("org.json.simple.JSONObject");
+//                classPool.importPackage("org.json.simple.JSONArray");
+//                classPool.importPackage("org.json.simple.parser.JSONParser");
+                classPool.importPackage("org.apache.sling.commons.json.JSONObject");
+                classPool.importPackage("org.apache.sling.commons.json.JSONArray");
                 classPool.importPackage("java.util.Set");
 
                 classPool.appendClassPath(new LoaderClassPath(loader));
@@ -68,7 +70,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 									+ "\n	fields[i].setAccessible(true);"
 									+ "\n	fieldValue[0] = fields[i].get($1);"
 									+ "\n 	String paramType =  fields[i].getType().getCanonicalName() + \"--\" + fields[i].getName();"
-									+ "\n 	jsonObj.put(paramType, storeParam(fieldValue,paramType).get(paramType));"
+									+ "\n 	jsonObj.accumulate(fields[i].getType().getSimpleName(), storeParam(fieldValue,paramType).get(paramType));"
 									+ "\n }"
 									+ "\n return jsonObj;"
 									+ "\n }";
@@ -77,11 +79,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 String storeObjects = "{"
                 					+ "\n JSONArray jArr = new JSONArray();"
                 					+ "\n if($1[0].getClass().getComponentType()!=null){"
-                					+ "\n 	 jArr.add(storeObjectArray((Object[])$1[0]));"
+                					+ "\n 	 jArr.put(storeObjectArray((Object[])$1[0]));"
                 					+ "\n }"
                 					+ "\n else{"
                 					+ "\n 	for(int i =0; i<$1.length; i++){" 
-                					+ "\n 		jArr.add(storeObject($1[i]));"
+                					+ "\n 		jArr.put(storeObject($1[i]));"
                 					+ "\n 	}"
                 					+ "\n }"
                 					+ "\n return jArr;"
@@ -111,14 +113,14 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 					+ "\n String paramCanonicalName = paramObj.getClass().getCanonicalName();"
                 					+ "\n if(ifPrimitive(paramCanonicalName)){"
                 					+ "\n 	String value = Arrays.deepToString($1);"
-                					+ "\n 	jsonParam.put($2, value.substring(1,value.length()-1));"
+                					+ "\n 	jsonParam.accumulate($2, value.substring(1,value.length()-1));"
                 					+ "\n }"
                 					+ "\n else{"
                 					+ "\n 	if(paramCanonicalName.contains(\"[]\")){"
-                					+ "\n 		jsonParam.put($2, storeObjectArray((Object[])paramObj));"
+                					+ "\n 		jsonParam.accumulate($2, storeObjectArray((Object[])paramObj));"
                 					+ "\n 	}"
                 					+ "\n 	else{"
-                					+ "\n 		jsonParam.put($2, storeObject(paramObj));"
+                					+ "\n 		jsonParam.accumulate($2, storeObject(paramObj));"
                 					+ "\n 	}"	
                 					+ "\n }"
                 					+ "\n return jsonParam;"
@@ -129,14 +131,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n JSONObject methodObj = new JSONObject();"
                 		+ "\n methodObj.put(\"method_name\", $1);"
                 		+ "\n JSONObject paramObj = new JSONObject();"
-                		+ "\n JSONParser parser = new JSONParser();"
                 		+ "\n Object[] paramWrapperObject = new Object[1];"
                 		+ "\n int num = $4;"
                 		+ "\n for(int i = 0; i<num; i++){"
                 		+ "\n 	paramWrapperObject[0] = $2[i];"
-                		+ "\n 	paramObj.put($3[i], storeParam(paramWrapperObject, $3[i]).get($3[i]));}"
-                		+ "\n methodObj.put(\"params\", paramObj);"
-                		+ "\n System.out.println(methodObj.toJSONString());"
+                		+ "\n 	paramObj.accumulate($3[i], storeParam(paramWrapperObject, $3[i]).get($3[i]));}"
+                		+ "\n methodObj.accumulate(\"params\", paramObj);"
+                		+ "\n System.out.println(methodObj.toString());"
                 	    + "\n }";
              
 						
@@ -214,7 +215,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		for(CtClass c: paramTypeWrappers){
                 			String paramWrapper = c.getName();
                  			paramWrapper = paramWrapper.substring(paramWrapper.lastIndexOf(".")+1);
-                 			paramWrapper = "(" + paramWrapper + ")";
+//                 			paramWrapper = "(" + paramWrapper + ")";
                  			paramWrappers.add(paramWrapper);
                 		}
                 		
