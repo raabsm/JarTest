@@ -140,31 +140,18 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n System.out.println(methodObj.toString());"
                 	    + "\n }";
              
-						
-                String newMethod = "{"
-//                		+ "\n String printLine = \"class name: \" + classname + \"| methodName: \" + methodname + \"| params: \" + Arrays.deepToString(params);"
-//                		+ "\n printLine += \"|param casts: \" + Arrays.toString(paramCasts) + \"|numParams: \" + numParams;"
-//                		+ "\n printLine += \"|serFile \" + serFile + \"|serFileReturn: \" + serFileReturn  + \"|returnCast: \" + returnCast;"
-//                		+ "\n System.out.println(printLine);"
-//                		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
-//                		+ "\n FileUtils.write(myfile,\"\\n\" + printLine, \"UTF8\", true);"
-                		+"\n System.out.println(\"ran\");"
-                		+ "\n storeParams($1, $2, $3, $8);"
-                	    + "\n }";
                 
                 String storeObjectAbstract = "public static abstract JSONObject storeObject(Object obj);";
                 String storeObjectsAbstract = "public static abstract JSONArray storeObjectArray(Object[] obj);";
                 String ifArrAbstract = "public static abstract boolean ifArray(Object obj);";
                 String storeParamAbstract = "public static abstract JSONObject storeParam(Object[] param, String paramCast);";
                 String storeParamsAbstract = "public static abstract void storeParams(String methodName, Object[] params, String[] paramCasts, int numParams);";
-                String newMethodAbstract = "public static abstract void printMethodToFile(String methodname, Object[] params, String[] paramCasts, String classname, String returnCast, String serFile, String serFileReturn, int numParams);";
                 
                 CtMethod method1 = CtNewMethod.make(ifArrAbstract, clazz);
                 CtMethod method2 = CtNewMethod.make(storeObjectAbstract, clazz);
                 CtMethod method3 = CtNewMethod.make(storeObjectsAbstract, clazz);
                 CtMethod method4 = CtNewMethod.make(storeParamAbstract, clazz);
                 CtMethod method5 = CtNewMethod.make(storeParamsAbstract, clazz);
-                CtMethod method6 = CtNewMethod.make(newMethodAbstract, clazz); 
                 clazz.addMethod(CtNewMethod.make(ifPrimitive, clazz));
 
                 clazz.addMethod(method1);
@@ -172,13 +159,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 clazz.addMethod(method3);
                 clazz.addMethod(method4);
                 clazz.addMethod(method5);
-                clazz.addMethod(method6);
                 method1.setBody(ifArrMethod);
                 method2.setBody(storeObject);
                 method3.setBody(storeObjects);
                 method4.setBody(storeParam);
                 method5.setBody(storeParams);
-                method6.setBody(newMethod);
                 clazz.setModifiers(clazz.getModifiers() & ~Modifier.ABSTRACT);
 
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
@@ -224,9 +209,9 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 			sb.append("\"" + paramWrappers.get(i) + "\",");
                 		}
                 		sb.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
-	                    method.insertBefore("{ String nameofCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
+	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
-	                             		+ "\n printMethodToFile(nameofCurrMethod, o, " + sb.toString() + ", \"" + nameOfClass + "\", \"" + returnWrapper + "\", \"" + paramFile + "\", \"" + returnFile + "\"," + paramWrappers.size() + "); "
+	                             		+ "\n storeParams(nameOfCurrMethod, o, " + sb.toString() + ", " + paramWrappers.size() + ");"
 	                             		+ "\n }");
 	                    
 	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
