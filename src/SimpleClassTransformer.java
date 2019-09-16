@@ -50,11 +50,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.lang.reflect.Field");
                 classPool.importPackage("java.util.Arrays");
                 classPool.importPackage("java.util.List");
-//                classPool.importPackage("org.json.simple.JSONObject");
-//                classPool.importPackage("org.json.simple.JSONArray");
-//                classPool.importPackage("org.json.simple.parser.JSONParser");
-                classPool.importPackage("org.apache.sling.commons.json.JSONObject");
-                classPool.importPackage("org.apache.sling.commons.json.JSONArray");
+                classPool.importPackage("org.json.simple.JSONObject");
+                classPool.importPackage("org.json.simple.JSONArray");
+                classPool.importPackage("org.json.simple.parser.JSONParser");
+//                classPool.importPackage("org.apache.sling.commons.json.JSONObject");
+//                classPool.importPackage("org.apache.sling.commons.json.JSONArray");
                 classPool.importPackage("java.util.Set");
 
                 classPool.appendClassPath(new LoaderClassPath(loader));
@@ -70,7 +70,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 									+ "\n	fields[i].setAccessible(true);"
 									+ "\n	fieldValue[0] = fields[i].get($1);"
 									+ "\n 	String paramType =  fields[i].getType().getCanonicalName() + \"--\" + fields[i].getName();"
-									+ "\n 	jsonObj.accumulate(paramType, storeParam(fieldValue,paramType).get(paramType));"
+									+ "\n 	jsonObj.put(paramType, storeParam(fieldValue,paramType).get(paramType));"
 									+ "\n }"
 									+ "\n return jsonObj;"
 									+ "\n }";
@@ -79,11 +79,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 String storeObjects = "{"
                 					+ "\n JSONArray jArr = new JSONArray();"
                 					+ "\n if($1[0].getClass().getComponentType()!=null){"
-                					+ "\n 	 jArr.put(storeObjectArray((Object[])$1[0]));"
+                					+ "\n 	 jArr.add(storeObjectArray((Object[])$1[0]));"
                 					+ "\n }"
                 					+ "\n else{"
                 					+ "\n 	for(int i =0; i<$1.length; i++){" 
-                					+ "\n 		jArr.put(storeObject($1[i]));"
+                					+ "\n 		jArr.add(storeObject($1[i]));"
                 					+ "\n 	}"
                 					+ "\n }"
                 					+ "\n return jArr;"
@@ -138,9 +138,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n 	paramJsonObj  = new JSONObject();"
                 		+ "\n 	paramWrapperObject[0] = $2[i];"
                 		+ "\n 	paramJsonObj.put($3[i], storeParam(paramWrapperObject, $3[i]).get($3[i]));"
-                		+ "\n 	paramArr.put(paramJsonObj);}"
-                		+ "\n methodObj.accumulate(\"params\", paramArr);"
+                		+ "\n 	paramArr.add(paramJsonObj);}"
+                		+ "\n methodObj.put(\"params\", paramArr);"
                 		+ "\n System.out.println(methodObj.toString());"
+                		+ "\n File myfile = new File(\"test.json\");"
+                		+ "\n FileUtils.write(myfile, methodObj.toJSONString(), \"UTF8\", true);"
                 	    + "\n }";
              
                 
@@ -177,7 +179,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	String nameOfMethod = method.getMethodInfo().getName();	
                 	if(!"printMethodToFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
-                    	
                     	boolean ifReturnsArray = method.getReturnType().isArray();
    	                    String inStatement;
    	                    if(ifReturnsArray){
@@ -203,18 +204,22 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		for(CtClass c: paramTypeWrappers){
                 			String paramWrapper = c.getName();
                  			paramWrapper = paramWrapper.substring(paramWrapper.lastIndexOf(".")+1);
-//                 			paramWrapper = "(" + paramWrapper + ")";
                  			paramWrappers.add(paramWrapper);
                 		}
+                		StringBuilder paramCasts = new StringBuilder("new String[] {");
+                		StringBuilder methodSignature = new StringBuilder(nameOfMethod + "(");
                 		
-                		StringBuilder sb = new StringBuilder("new String[] {");
                 		for(int i = 0; i<paramWrappers.size()-1; i++){
-                			sb.append("\"" + paramWrappers.get(i) + "\",");
+                			paramCasts.append("\"" + paramWrappers.get(i) + "\",");
+                			methodSignature.append(paramWrappers.get(i) + ",");
                 		}
-                		sb.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
+                    	
+                		paramCasts.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
+                		methodSignature.append(paramWrappers.get(paramWrappers.size()-1) + ")");
+                		System.out.println(methodSignature.toString());
 	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
-	                             		+ "\n storeParams(nameOfCurrMethod, o, " + sb.toString() + ", " + paramWrappers.size() + ");"
+	                             		+ "\n storeParams(nameOfCurrMethod, o, " + paramCasts.toString() + ", " + paramWrappers.size() + ");"
 	                             		+ "\n }");
 	                    
 	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
