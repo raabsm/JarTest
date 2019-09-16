@@ -53,8 +53,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("org.json.simple.JSONObject");
                 classPool.importPackage("org.json.simple.JSONArray");
                 classPool.importPackage("org.json.simple.parser.JSONParser");
-//                classPool.importPackage("org.apache.sling.commons.json.JSONObject");
-//                classPool.importPackage("org.apache.sling.commons.json.JSONArray");
                 classPool.importPackage("java.util.Set");
 
                 classPool.appendClassPath(new LoaderClassPath(loader));
@@ -128,29 +126,49 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                
                 
                 String storeParams = "{"
-                		+ "\n JSONObject methodObj = new JSONObject();"
-                		+ "\n methodObj.put(\"method_name\", $1);"
                 		+ "\n JSONArray paramArr = new JSONArray();"
                 		+ "\n JSONObject paramJsonObj;"
                 		+ "\n Object[] paramWrapperObject = new Object[1];"
-                		+ "\n int num = $4;"
+                		+ "\n int num = $3;"
                 		+ "\n for(int i = 0; i<num; i++){"
                 		+ "\n 	paramJsonObj  = new JSONObject();"
-                		+ "\n 	paramWrapperObject[0] = $2[i];"
-                		+ "\n 	paramJsonObj.put($3[i], storeParam(paramWrapperObject, $3[i]).get($3[i]));"
+                		+ "\n 	paramWrapperObject[0] = $1[i];"
+                		+ "\n 	paramJsonObj.put($2[i], storeParam(paramWrapperObject, $2[i]).get($2[i]));"
                 		+ "\n 	paramArr.add(paramJsonObj);}"
-                		+ "\n methodObj.put(\"params\", paramArr);"
-                		+ "\n System.out.println(methodObj.toString());"
-                		+ "\n File myfile = new File(\"test.json\");"
-                		+ "\n FileUtils.write(myfile, methodObj.toJSONString(), \"UTF8\", true);"
+                		+ "\n return paramArr;"
                 	    + "\n }";
-             
+                
+                String storeParamsOrWriteFile = "public static void storeParamsOrWriteFile(String methodSignature, Object[] params, String[] paramCasts, int numParams){"
+                		+ "\n String fileName = \"" + className + ".json\";"
+                		+ "\n File myfile = new File(fileName);" //took out output for now
+                		+ "\n JSONParser parser = new JSONParser();"
+                		+ "\n try{"
+                		+ "\n 	String json = FileUtils.readFileToString(myfile, \"UTF8\");"
+                		+ "\n 	JSONObject readJsonObj = (JSONObject)parser.parse(json);"
+                		+ "\n 	JSONObject methods = (JSONObject)readJsonObj.get(\"methods\");"
+                		+ "\n 	JSONObject method_info = new JSONObject();"
+                		+ "\n 	method_info.put(\"params_before\", storeParams(params, paramCasts, numParams));"
+                		+ "\n 	methods.put(methodSignature, method_info);"
+                		+ "\n 	FileUtils.write(myfile, readJsonObj.toJSONString(), \"UTF8\", false);"
+                		+ "\n }"
+                		+ "\n catch(IOException e){"
+                		+ "\n 	JSONObject classObject = new JSONObject();"
+                		+ "\n  	classObject.put(\"class_name\", \"" + className + "\");"
+                		+ "\n 	JSONObject methods = new JSONObject();"
+                		+ "\n 	JSONObject method_info = new JSONObject();"
+                		+ "\n 	method_info.put(\"params_before\", storeParams(params, paramCasts, numParams));"
+                		+ "\n 	methods.put(methodSignature, method_info);"
+                		+ "\n 	classObject.put(\"methods\", methods);"
+                		+ "\n 	FileUtils.write(myfile, classObject.toJSONString(), \"UTF8\", false);"
+                		+ "\n 	System.out.println(classObject.toJSONString());"
+                		+ "\n }"
+                		+ "\n }";
                 
                 String storeObjectAbstract = "public static abstract JSONObject storeObject(Object obj);";
                 String storeObjectsAbstract = "public static abstract JSONArray storeObjectArray(Object[] obj);";
                 String ifArrAbstract = "public static abstract boolean ifArray(Object obj);";
                 String storeParamAbstract = "public static abstract JSONObject storeParam(Object[] param, String paramCast);";
-                String storeParamsAbstract = "public static abstract void storeParams(String methodName, Object[] params, String[] paramCasts, int numParams);";
+                String storeParamsAbstract = "public static abstract JSONArray storeParams(Object[] params, String[] paramCasts, int numParams);";
                 
                 CtMethod method1 = CtNewMethod.make(ifArrAbstract, clazz);
                 CtMethod method2 = CtNewMethod.make(storeObjectAbstract, clazz);
@@ -170,6 +188,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 method4.setBody(storeParam);
                 method5.setBody(storeParams);
                 clazz.setModifiers(clazz.getModifiers() & ~Modifier.ABSTRACT);
+                clazz.addMethod(CtNewMethod.make(storeParamsOrWriteFile, clazz));
 
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
                 int counter = 0;
@@ -177,7 +196,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();	
-                	if(!"printMethodToFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
+                	if(!"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
                     	boolean ifReturnsArray = method.getReturnType().isArray();
    	                    String inStatement;
@@ -219,7 +238,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		System.out.println(methodSignature.toString());
 	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
-	                             		+ "\n storeParams(nameOfCurrMethod, o, " + paramCasts.toString() + ", " + paramWrappers.size() + ");"
+	                             		+ "\n storeParamsOrWriteFile(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ");"
 	                             		+ "\n }");
 	                    
 	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
