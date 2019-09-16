@@ -5,11 +5,10 @@ public class ExampleClass {
 	private int i;
 	private String s;
 	private int k = 5;
-	private ExampleClass e;
 
-	public ExampleClass(){
+	public ExampleClass(String s){
 		i = 7;
-		s = "hello";
+		this.s = s;
 	}
 	
 	public int geti(){
