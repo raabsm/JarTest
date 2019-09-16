@@ -6,14 +6,14 @@ public class SampleClass {
         SampleClass.method1("yo", new String[] {"dfsaf", "fdsaf"});
 
         int[] x = {7,9};
-        SampleClass.method2(new int[] {7, 9}, 0);
+        SampleClass.method2(new int[] {7, 9}, 0, true);
         SampleClass.method3(new ExampleClass[] {new ExampleClass("rach"), new ExampleClass("sam")});
     }
     
     public static String method1(String s, String[] x){ return "5";}
 
     
-    public static ExampleClass method2(int[] s, int i){
+    public static ExampleClass method2(int[] s, int i, boolean t){
     		return new ExampleClass("sdfadf");
     }
     
