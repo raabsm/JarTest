@@ -39,7 +39,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
             final Class<?> classBeingRedefined, 
             final ProtectionDomain protectionDomain,
             final byte[] classfileBuffer ) throws IllegalClassFormatException {
-        if ("sam/SampleClass".equals(className) || className.startsWith("ibi") || className.startsWith("com/ibi") || className.startsWith("com\\ibi")) {
+        if ("sam/SampleClass".equals(className)|| "sam/Scooter".equals(className)|| "sam/student_runner_Vehicle".equals(className)|| "sam/Vehicle".equals(className)|| className.startsWith("com/ibi") || className.startsWith("com\\ibi")) {
             try {
             	nameOfClass = className;
                 final ClassPool classPool = ClassPool.getDefault();
@@ -143,7 +143,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	    + "\n }";
                 
                 String storeParamsOrWriteFile = "public static void storeParamsOrWriteFile(String methodSignature, Object[] params, String[] paramCasts, int numParams){"
-                		+ "\n String fileName = \"" + className + ".json\";"
+                		+ "\n String fileName = \"" + output+ className + ".json\";"
                 		+ "\n File myfile = new File(fileName);" //took out output for now
                 		+ "\n JSONParser parser = new JSONParser();"
                 		+ "\n try{"
@@ -157,7 +157,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n }"
                 		+ "\n catch(IOException e){"
                 		+ "\n 	JSONObject classObject = new JSONObject();"
-                		+ "\n  	classObject.put(\"class_name\", \"" + className + "\");"
+                		+ "\n  	classObject.put(\"class_name\", \"" + classNameWithDots + "\");"
                 		+ "\n 	JSONObject methods = new JSONObject();"
                 		+ "\n 	JSONObject method_info = new JSONObject();"
                 		+ "\n 	method_info.put(\"params_before\", storeParams(params, paramCasts, numParams));"
@@ -169,7 +169,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n }";
                 
                 String storeReturn = "public static void storeReturn(String methodSignature, Object[] params, String[] paramCasts, int numParams, Object[] returnParam, String returnParamCast){"
-                		+ "\n String fileName = \"" + className + ".json\";"
+                		+ "\n String fileName = \"" + output + className + ".json\";"
                 		+ "\n File myfile = new File(fileName);" //took out output for now
                 		+ "\n JSONParser parser = new JSONParser();"
 		                + "\n try{"
@@ -258,19 +258,21 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		
                 		paramCasts.append("\"" + lastWrapper + "\"}");
                 		methodSignature.append(lastWrapper + ")");
-                		System.out.println(methodSignature.toString());
 	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
+	                             		+ "\n System.out.println(\"executed\");"
 	                             		+ "\n storeParamsOrWriteFile(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ");"
 	                             		+ "\n }");
 	                    
 	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
 	                    		+ "\n Object[] returnVar = new Object[1];"
                          		+ "\n Object[] o = $args;"
-	                    		+ "\n returnVar[0] = $_;"
+	                    		+ "\n returnVar[0] = ($w)$_;"
 	                    		+ "\n storeReturn(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ", returnVar, \"" + returnWrapper + "\");"
 	                    		+ "\n}";
 	                    method.insertAfter(insertAfter);
+                		System.out.println(methodSignature.toString());
+
                 	}
                 }
                 byte[] byteCode = clazz.toBytecode();

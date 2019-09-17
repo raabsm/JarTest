@@ -12,14 +12,14 @@ public class SampleClass {
 
     }
     
-    public static void method1(String s, String[] x){}
+    public static String method1(String s, String[] x){return "5";}
 
     
     public static ExampleClass method2(int[] s, int i, boolean t){
     		return new ExampleClass("sdfadf");
     }
     
-    public static String method3(ExampleClass[] e){return "yo";}
+    public static int method3(ExampleClass[] e){return 7;}
     
     public static void method4(){}
 
