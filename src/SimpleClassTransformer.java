@@ -108,6 +108,10 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 String storeParam = "{"
                 					+ "\n Object paramObj = $1[0];"
                 					+ "\n JSONObject jsonParam = new JSONObject();"
+                					+ "\n if($2.equals(\"void\")){"
+                					+ "\n 	jsonParam.put(\"void\", null);"
+                					+ "\n 	return jsonParam;"
+                					+ "\n }"
                 					+ "\n String paramCanonicalName = paramObj.getClass().getCanonicalName();"
                 					+ "\n if(ifPrimitive(paramCanonicalName)){"
                 					+ "\n 	String value = Arrays.deepToString($1);"
@@ -164,6 +168,24 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		+ "\n }"
                 		+ "\n }";
                 
+                String storeReturn = "public static void storeReturn(String methodSignature, Object[] params, String[] paramCasts, int numParams, Object[] returnParam, String returnParamCast){"
+                		+ "\n String fileName = \"" + className + ".json\";"
+                		+ "\n File myfile = new File(fileName);" //took out output for now
+                		+ "\n JSONParser parser = new JSONParser();"
+		                + "\n try{"
+		        		+ "\n 	String json = FileUtils.readFileToString(myfile, \"UTF8\");"
+		        		+ "\n 	JSONObject readJsonObj = (JSONObject)parser.parse(json);"
+		        		+ "\n 	JSONObject methods = (JSONObject)readJsonObj.get(\"methods\");"
+		        		+ "\n 	JSONObject method = (JSONObject)methods.get(methodSignature);"
+		        		+ "\n 	method.put(\"params_after\", storeParams(params, paramCasts, numParams));"
+		        		+ "\n 	method.put(\"returned\", storeParam(returnParam, returnParamCast));"
+		        		+ "\n 	FileUtils.write(myfile, readJsonObj.toJSONString(), \"UTF8\", false);"
+		        		+ "\n 	System.out.println(readJsonObj.toJSONString());"
+		        		+ "\n }"
+		        		+ "\n catch(IOException e){"
+		        		+ "\n 	e.printStackTrace();"
+		        		+ "\n }}";           		
+                		
                 String storeObjectAbstract = "public static abstract JSONObject storeObject(Object obj);";
                 String storeObjectsAbstract = "public static abstract JSONArray storeObjectArray(Object[] obj);";
                 String ifArrAbstract = "public static abstract boolean ifArray(Object obj);";
@@ -189,6 +211,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 method5.setBody(storeParams);
                 clazz.setModifiers(clazz.getModifiers() & ~Modifier.ABSTRACT);
                 clazz.addMethod(CtNewMethod.make(storeParamsOrWriteFile, clazz));
+                clazz.addMethod(CtNewMethod.make(storeReturn, clazz));
 
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
                 int counter = 0;
@@ -196,7 +219,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();	
-                	if(!"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
+                	if(!"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeReturn".equals(nameOfMethod)&& !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
                     	boolean ifReturnsArray = method.getReturnType().isArray();
    	                    String inStatement;
@@ -216,8 +239,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                     	String returnWrapper = "";
              			returnWrapper = method.getReturnType().getName();
              			returnWrapper = returnWrapper.substring(returnWrapper.lastIndexOf(".")+1);
-             			returnWrapper = "(" + returnWrapper + ")";
-                		
+             			
                 		ArrayList<String> paramWrappers = new ArrayList<>();
                 		CtClass[] paramTypeWrappers = method.getParameterTypes();
                 		for(CtClass c: paramTypeWrappers){
@@ -232,9 +254,10 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 			paramCasts.append("\"" + paramWrappers.get(i) + "\",");
                 			methodSignature.append(paramWrappers.get(i) + ",");
                 		}
-                    	
-                		paramCasts.append("\"" + paramWrappers.get(paramWrappers.size()-1) + "\"}");
-                		methodSignature.append(paramWrappers.get(paramWrappers.size()-1) + ")");
+                    	String lastWrapper = paramWrappers.size()>0 ? paramWrappers.get(paramWrappers.size()-1) : "";
+                		
+                		paramCasts.append("\"" + lastWrapper + "\"}");
+                		methodSignature.append(lastWrapper + ")");
                 		System.out.println(methodSignature.toString());
 	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
@@ -242,13 +265,10 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 	                             		+ "\n }");
 	                    
 	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
-	                    		+ "\n File myfile = new File(\"" + output + className + ".txt\");" 
-	                    		+ "\n if(" + inStatement + "){" 
-	                    		+ "\n   System.out.print(Arrays.toString($_));"
-	                    		+ "\n 	FileUtils.write(myfile, \"|return val: \" + Arrays.toString($_) , \"UTF8\", true);}"
-	                    		+ "\n else{"
-	                    		+ "\n   System.out.print($_);"
-	                    		+ "\n 	FileUtils.write(myfile, \"|return val: \" + $_.toString() , \"UTF8\", true);}"
+	                    		+ "\n Object[] returnVar = new Object[1];"
+                         		+ "\n Object[] o = $args;"
+	                    		+ "\n returnVar[0] = $_;"
+	                    		+ "\n storeReturn(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ", returnVar, \"" + returnWrapper + "\");"
 	                    		+ "\n}";
 	                    method.insertAfter(insertAfter);
                 	}

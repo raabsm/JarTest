@@ -8,9 +8,11 @@ public class SampleClass {
         int[] x = {7,9};
         SampleClass.method2(new int[] {7, 9}, 0, true);
         SampleClass.method3(new ExampleClass[] {new ExampleClass("rach"), new ExampleClass("sam")});
+        SampleClass.method4();
+
     }
     
-    public static String method1(String s, String[] x){ return "5";}
+    public static void method1(String s, String[] x){}
 
     
     public static ExampleClass method2(int[] s, int i, boolean t){
@@ -18,5 +20,8 @@ public class SampleClass {
     }
     
     public static String method3(ExampleClass[] e){return "yo";}
+    
+    public static void method4(){}
+
     
 }
