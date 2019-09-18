@@ -4,7 +4,8 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -15,35 +16,42 @@ import javassist.LoaderClassPath;
 import javassist.Modifier;
 import javassist.NotFoundException;
 public class SimpleClassTransformer implements ClassFileTransformer {
-    HashMap<String, String> methodMap = new HashMap<String, String>();
-    String nameOfClass;
-    String allMockCalls = "";
-	
+	private HashSet<String> classes;
     private String output = "";
     
     public String getOutput() {
 		return output;
 	}
-
+    
+    public void setClasses(String[] classes){
+    	this.classes = new HashSet<String>(Arrays.asList(classes));
+    	System.out.println(this.classes);
+    }
+    
 	public void setOutput(String output) {
 		if(output!=null) {
 			this.output = output;
 			System.out.println("output set to " + output);
 		}
 	}
+	
+	public boolean ifIbiClass(String className){
+		for(String s: classes){
+			if(className.startsWith(s)) return true;
+		}
+		return false;
+	}
 
 	@Override
-    public byte[] transform( 
+    public byte[] transform(
             final ClassLoader loader, 
             final String className,
             final Class<?> classBeingRedefined, 
             final ProtectionDomain protectionDomain,
             final byte[] classfileBuffer ) throws IllegalClassFormatException {
-        if ("sam/SampleClass".equals(className)|| "sam/Scooter".equals(className)|| "sam/student_runner_Vehicle".equals(className)|| "sam/Vehicle".equals(className)|| className.startsWith("com/ibi") || className.startsWith("com\\ibi")) {
+        if (ifIbiClass(className)) {
             try {
-            	nameOfClass = className;
                 final ClassPool classPool = ClassPool.getDefault();
-//                classPool.importPackage("java.lang.*");
                 classPool.importPackage("org.apache.commons.io.FileUtils");
                 classPool.importPackage("java.io.File");
                 classPool.importPackage("java.io.IOException");
@@ -216,7 +224,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 //CtMethod mainMethod = clazz.getDeclaredMethod("main");
                 int counter = 0;
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
-                	//System.out.println("injecting code into: " + method.getMethodInfo().getName());
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();	
                 	if(!"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeReturn".equals(nameOfMethod)&& !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
@@ -229,13 +236,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
    	                    else{
    	                    	inStatement = "false";
    	                    }
-   	                    if(methodMap.containsKey(paramFile)){
-	                 		paramFile = counter++ + paramFile;
-                 	}
-   	                    String returnFile = "return" + paramFile;
-   	                    methodMap.put(paramFile, returnFile);
-   	                   
-                    	
+
                     	String returnWrapper = "";
              			returnWrapper = method.getReturnType().getName();
              			returnWrapper = returnWrapper.substring(returnWrapper.lastIndexOf(".")+1);
@@ -277,8 +278,6 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 }
                 byte[] byteCode = clazz.toBytecode();
                 clazz.detach();
-                //testSerlizedParamaters();
-                //seeIfReadFile();
                 return byteCode;
             } catch (final NotFoundException | CannotCompileException | IOException ex) {
                 ex.printStackTrace();
