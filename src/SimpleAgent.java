@@ -4,7 +4,6 @@ public class SimpleAgent {
     public static void premain(String agentArgs, Instrumentation inst) {
 
     	String output = null;
-    	System.out.println(agentArgs);
     	String[]  classes = {};
     	if(agentArgs!=null){
 	    	String[] parms = agentArgs.split(";");

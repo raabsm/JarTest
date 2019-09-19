@@ -57,11 +57,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.importPackage("java.io.IOException");
                 classPool.importPackage("java.lang.reflect.Field");
                 classPool.importPackage("java.util.Arrays");
-                classPool.importPackage("java.util.List");
+                classPool.importPackage("java.util.Collection");
+                classPool.importPackage("java.util.Iterator");
                 classPool.importPackage("org.json.simple.JSONObject");
                 classPool.importPackage("org.json.simple.JSONArray");
                 classPool.importPackage("org.json.simple.parser.JSONParser");
                 classPool.importPackage("java.util.Set");
+                classPool.importPackage("java.util.Map");
 
                 classPool.appendClassPath(new LoaderClassPath(loader));
                 String classNameWithDots= className.replace("/", ".");
@@ -96,22 +98,51 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 					+ "\n }";
                 
                 
-                
                 String ifArrMethod = "{"
 								    + "\n 	Class c = $1.getClass();"
 								   	+ "\n	return c.getCanonicalName().contains(\"[]\");}";
                 
                 String ifPrimitive = "public static boolean ifPrimitive(String type){"
                 					+ "\n return (type.contains(\"int\") || "
-                					+ "type.contains(\"int\") ||"
                 					+ " type.contains(\"byte\") ||"
                 					+ " type.contains(\"long\") ||"
                 					+ " type.contains(\"short\") ||"
-                					+ " type.contains(\"java\") ||"
+                					+ " type.contains(\"lang\") ||"
                 					+ " type.contains(\"boolean\") ||"
                 					+ " type.contains(\"char\") ||"
                 					+ " type.contains(\"float\") ||"
                 					+ " type.contains(\"double\"));}";
+                
+                String storeList = "{"
+                					+ "\n JSONArray jArr = new JSONArray();"
+                					+ "\n Iterator itr = $1.iterator();"
+                					+ "\n Object[] param = new Object[1];"
+                					+ "\n while(itr.hasNext()){"
+                					+ "\n 	param[0] = itr.next();"
+                					+ "\n 	jArr.add(storeParam(param, param[0].getClass().getSimpleName()));"
+                					+ "\n }"
+                					+ "\n return jArr;"
+                					+ "\n }"
+                					+ "\n ";
+
+                String storeMap = "{"
+			    					+ "\n JSONArray jArr = new JSONArray();"
+			    					+ "\n JSONObject jObj;"
+			    					+ "\n Iterator itr = $1.keySet().iterator();"
+			    					+ "\n Object[] keyObj = new Object[1];"
+			    					+ "\n Object[] value = new Object[1];"
+			    					+ "\n while(itr.hasNext()){"
+			    					+ "\n 	jObj = new JSONObject();"
+			    					+ "\n 	Object key = itr.next();"
+			    					+ "\n 	keyObj[0] = key;"
+			    					+ "\n 	value[0] = $1.get(key);"
+			    					+ "\n 	jObj.put(\"key\", storeParam(keyObj, key.getClass().getSimpleName()));"
+			    					+ "\n 	jObj.put(\"value\", storeParam(value, value[0].getClass().getSimpleName()));"
+			    					+ "\n 	jArr.add(jObj);"
+			    					+ "\n }"
+			    					+ "\n return jArr;"
+			    					+ "\n }"
+			    					+ "\n ";
 
                 String storeParam = "{"
                 					+ "\n Object paramObj = $1[0];"
@@ -126,7 +157,13 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 					+ "\n 	jsonParam.put($2, value.substring(1,value.length()-1));"
                 					+ "\n }"
                 					+ "\n else{"
-                					+ "\n 	if(paramCanonicalName.contains(\"[]\")){"
+                					+ "\n 	if(paramCanonicalName.contains(\"Set\") || paramCanonicalName.contains(\"List\")){"
+                					+ "\n 		jsonParam.put($2, storeList((Collection)paramObj));"
+                					+ "\n 	}"
+                					+ "\n 	else if(paramCanonicalName.contains(\"Map\")){"
+                					+ "\n 		jsonParam.put($2, storeMap((Map)paramObj));"
+                					+ "\n 	}"
+                					+ "\n 	else if(paramCanonicalName.contains(\"[]\")){"
                 					+ "\n 		jsonParam.put($2, storeObjectArray((Object[])paramObj));"
                 					+ "\n 	}"
                 					+ "\n 	else{"
@@ -199,12 +236,17 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 String ifArrAbstract = "public static abstract boolean ifArray(Object obj);";
                 String storeParamAbstract = "public static abstract JSONObject storeParam(Object[] param, String paramCast);";
                 String storeParamsAbstract = "public static abstract JSONArray storeParams(Object[] params, String[] paramCasts, int numParams);";
-                
+                String storeListAbstract = "public static abstract JSONArray storeList(Collection list);";
+                String storeMapAbstract = "public static abstract JSONArray storeMap(Map map);";
+
                 CtMethod method1 = CtNewMethod.make(ifArrAbstract, clazz);
                 CtMethod method2 = CtNewMethod.make(storeObjectAbstract, clazz);
                 CtMethod method3 = CtNewMethod.make(storeObjectsAbstract, clazz);
                 CtMethod method4 = CtNewMethod.make(storeParamAbstract, clazz);
                 CtMethod method5 = CtNewMethod.make(storeParamsAbstract, clazz);
+                CtMethod method6 = CtNewMethod.make(storeListAbstract, clazz);
+                CtMethod method7 = CtNewMethod.make(storeMapAbstract, clazz);
+
                 clazz.addMethod(CtNewMethod.make(ifPrimitive, clazz));
 
                 clazz.addMethod(method1);
@@ -212,11 +254,17 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 clazz.addMethod(method3);
                 clazz.addMethod(method4);
                 clazz.addMethod(method5);
+                clazz.addMethod(method6);
+                clazz.addMethod(method7);
+
                 method1.setBody(ifArrMethod);
                 method2.setBody(storeObject);
                 method3.setBody(storeObjects);
                 method4.setBody(storeParam);
                 method5.setBody(storeParams);
+                method6.setBody(storeList);
+                method7.setBody(storeMap);
+
                 clazz.setModifiers(clazz.getModifiers() & ~Modifier.ABSTRACT);
                 clazz.addMethod(CtNewMethod.make(storeParamsOrWriteFile, clazz));
                 clazz.addMethod(CtNewMethod.make(storeReturn, clazz));
@@ -226,7 +274,7 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 for (final CtMethod method: clazz.getDeclaredMethods()) {
                 	String nameOfClass = clazz.getName();
                 	String nameOfMethod = method.getMethodInfo().getName();	
-                	if(!"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeReturn".equals(nameOfMethod)&& !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
+                	if(!"storeMap".equals(nameOfMethod) && !"storeList".equals(nameOfMethod) && !"storeParamsOrWriteFile".equals(nameOfMethod)  && !"main".equals(nameOfMethod)  && !"storeReturn".equals(nameOfMethod)&& !"storeObject".equals(nameOfMethod) && !"storeParams".equals(nameOfMethod) && !"ifArray".equals(nameOfMethod) && !"storeParam".equals(nameOfMethod) && !"storeObjectArray".equals(nameOfMethod)&& !"ifPrimitive".equals(nameOfMethod)){
                     	String paramFile =  nameOfMethod+ ".txt";
                     	boolean ifReturnsArray = method.getReturnType().isArray();
    	                    String inStatement;
@@ -261,18 +309,16 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 		methodSignature.append(lastWrapper + ")");
 	                    method.insertBefore("{ String nameOfCurrMethod = new Exception().getStackTrace()[0].getMethodName(); "
 	                             		+ "\n Object[] o = $args;"
-	                             		+ "\n System.out.println(\"executed\");"
 	                             		+ "\n storeParamsOrWriteFile(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ");"
 	                             		+ "\n }");
 	                    
-	                    String insertAfter = "{ System.out.print(\"returned from \" + new Exception().getStackTrace()[0].getMethodName() + \":\");"
+	                    String insertAfter = "{"
 	                    		+ "\n Object[] returnVar = new Object[1];"
                          		+ "\n Object[] o = $args;"
 	                    		+ "\n returnVar[0] = ($w)$_;"
 	                    		+ "\n storeReturn(\"" + methodSignature.toString() + "\", o, " + paramCasts.toString() + ", " + paramWrappers.size() + ", returnVar, \"" + returnWrapper + "\");"
 	                    		+ "\n}";
 	                    method.insertAfter(insertAfter);
-                		System.out.println(methodSignature.toString());
 
                 	}
                 }
