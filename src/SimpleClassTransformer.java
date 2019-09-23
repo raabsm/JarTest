@@ -68,128 +68,11 @@ public class SimpleClassTransformer implements ClassFileTransformer {
                 classPool.appendClassPath(new LoaderClassPath(loader));
                 String classNameWithDots= className.replace("/", ".");
                 
-                final CtClass clazz = classPool.get(classNameWithDots); 
-                String storeObject = "{"
-									+ "\n JSONObject jsonObj = new JSONObject();"
-									+ "\n Class c = $1.getClass();"
-									+ "\n Field[] fields = c.getDeclaredFields();"
-									+ "\n for(int i =0; i<fields.length; i++){"
-									+ "\n	Object[] fieldValue = new Object[1];"
-									+ "\n	fields[i].setAccessible(true);"
-									+ "\n	fieldValue[0] = fields[i].get($1);"
-									+ "\n 	String paramType =  fields[i].getType().getCanonicalName() + \"--\" + fields[i].getName();"
-									+ "\n 	jsonObj.put(paramType, storeParam(fieldValue,paramType).get(paramType));"
-									+ "\n }"
-									+ "\n return jsonObj;"
-									+ "\n }";
-                
-               
-                String storeObjects = "{"
-                					+ "\n JSONArray jArr = new JSONArray();"
-                					+ "\n if($1[0].getClass().getComponentType()!=null){"
-                					+ "\n 	 jArr.add(storeObjectArray((Object[])$1[0]));"
-                					+ "\n }"
-                					+ "\n else{"
-                					+ "\n 	for(int i =0; i<$1.length; i++){" 
-                					+ "\n 		jArr.add(storeObject($1[i]));"
-                					+ "\n 	}"
-                					+ "\n }"
-                					+ "\n return jArr;"
-                					+ "\n }";
-                
-                
-                String ifArrMethod = "{"
-								    + "\n 	Class c = $1.getClass();"
-								   	+ "\n	return c.getCanonicalName().contains(\"[]\");}";
-                
-                String ifPrimitive = "public static boolean ifPrimitive(String type){"
-                					+ "\n return (type.contains(\"int\") || "
-                					+ " type.contains(\"byte\") ||"
-                					+ " type.contains(\"long\") ||"
-                					+ " type.contains(\"short\") ||"
-                					+ " type.contains(\"lang\") ||"
-                					+ " type.contains(\"boolean\") ||"
-                					+ " type.contains(\"char\") ||"
-                					+ " type.contains(\"float\") ||"
-                					+ " type.contains(\"double\"));}";
-                
-                String storeList = "{"
-                					+ "\n JSONArray jArr = new JSONArray();"
-                					+ "\n Iterator itr = $1.iterator();"
-                					+ "\n Object[] param = new Object[1];"
-                					+ "\n while(itr.hasNext()){"
-                					+ "\n 	param[0] = itr.next();"
-                					+ "\n 	jArr.add(storeParam(param, param[0].getClass().getSimpleName()));"
-                					+ "\n }"
-                					+ "\n return jArr;"
-                					+ "\n }"
-                					+ "\n ";
-
-                String storeMap = "{"
-			    					+ "\n JSONArray jArr = new JSONArray();"
-			    					+ "\n JSONObject jObj;"
-			    					+ "\n Iterator itr = $1.keySet().iterator();"
-			    					+ "\n Object[] keyObj = new Object[1];"
-			    					+ "\n Object[] value = new Object[1];"
-			    					+ "\n while(itr.hasNext()){"
-			    					+ "\n 	jObj = new JSONObject();"
-			    					+ "\n 	Object key = itr.next();"
-			    					+ "\n 	keyObj[0] = key;"
-			    					+ "\n 	value[0] = $1.get(key);"
-			    					+ "\n 	jObj.put(\"key\", storeParam(keyObj, key.getClass().getSimpleName()));"
-			    					+ "\n 	jObj.put(\"value\", storeParam(value, value[0].getClass().getSimpleName()));"
-			    					+ "\n 	jArr.add(jObj);"
-			    					+ "\n }"
-			    					+ "\n return jArr;"
-			    					+ "\n }"
-			    					+ "\n ";
-
-                String storeParam = "{"
-                					+ "\n Object paramObj = $1[0];"
-                					+ "\n JSONObject jsonParam = new JSONObject();"
-                					+ "\n if($2.equals(\"void\")){"
-                					+ "\n 	jsonParam.put(\"void\", null);"
-                					+ "\n 	return jsonParam;"
-                					+ "\n }"
-                					+ "\n String paramCanonicalName = paramObj.getClass().getCanonicalName();"
-                					+ "\n if(ifPrimitive(paramCanonicalName)){"
-                					+ "\n 	String value = Arrays.deepToString($1);"
-                					+ "\n 	jsonParam.put($2, value.substring(1,value.length()-1));"
-                					+ "\n }"
-                					+ "\n else{"
-                					+ "\n 	if(paramCanonicalName.contains(\"Set\") || paramCanonicalName.contains(\"List\")){"
-                					+ "\n 		jsonParam.put($2, storeList((Collection)paramObj));"
-                					+ "\n 	}"
-                					+ "\n 	else if(paramCanonicalName.contains(\"Map\")){"
-                					+ "\n 		jsonParam.put($2, storeMap((Map)paramObj));"
-                					+ "\n 	}"
-                					+ "\n 	else if(paramCanonicalName.contains(\"[]\")){"
-                					+ "\n 		jsonParam.put($2, storeObjectArray((Object[])paramObj));"
-                					+ "\n 	}"
-                					+ "\n 	else{"
-                					+ "\n 		jsonParam.put($2, storeObject(paramObj));"
-                					+ "\n 	}"	
-                					+ "\n }"
-                					+ "\n return jsonParam;"
-                					+ "\n }";
-               
-                
-                String storeParams = "{"
-                		+ "\n JSONArray paramArr = new JSONArray();"
-                		+ "\n JSONObject paramJsonObj;"
-                		+ "\n Object[] paramWrapperObject = new Object[1];"
-                		+ "\n int num = $3;"
-                		+ "\n for(int i = 0; i<num; i++){"
-                		+ "\n 	paramJsonObj  = new JSONObject();"
-                		+ "\n 	paramWrapperObject[0] = $1[i];"
-                		+ "\n 	paramJsonObj.put($2[i], storeParam(paramWrapperObject, $2[i]).get($2[i]));"
-                		+ "\n 	paramArr.add(paramJsonObj);}"
-                		+ "\n return paramArr;"
-                	    + "\n }";
+                final CtClass clazz = classPool.get(classNameWithDots);
                 
                 String storeParamsOrWriteFile = "public static void storeParamsOrWriteFile(String methodSignature, Object[] params, String[] paramCasts, int numParams){"
                 		+ "\n String fileName = \"" + output+ className + ".json\";"
-                		+ "\n File myfile = new File(fileName);" //took out output for now
+                		+ "\n File myfile = new File(fileName);"
                 		+ "\n JSONParser parser = new JSONParser();"
                 		+ "\n try{"
                 		+ "\n 	String json = FileUtils.readFileToString(myfile, \"UTF8\");"
@@ -230,7 +113,138 @@ public class SimpleClassTransformer implements ClassFileTransformer {
 		        		+ "\n catch(IOException e){"
 		        		+ "\n 	e.printStackTrace();"
 		        		+ "\n }}";           		
-                		
+                
+                String ifPrimitive = "public static boolean ifPrimitive(String type){"
+                					+ "\n return (type.contains(\"int\") || "
+                					+ " type.contains(\"byte\") ||"
+                					+ " type.contains(\"long\") ||"
+                					+ " type.contains(\"short\") ||"
+                					+ " type.contains(\"lang\") ||"
+                					+ " type.contains(\"boolean\") ||"
+                					+ " type.contains(\"char\") ||"
+                					+ " type.contains(\"float\") ||"
+                					+ " type.contains(\"double\"));}";
+                
+               /*-----group of mutually recursive methods, must be declared as abstract, and then added to class-----*/
+                
+                /*public static JSONArray storeParams(Object[] params ($1), String[] paramCasts ($2) , int numParams ($3) );*/ 
+                
+                String storeParams = "{"
+                		+ "\n JSONArray paramArr = new JSONArray();"
+                		+ "\n JSONObject paramJsonObj;"
+                		+ "\n Object[] paramWrapperObject = new Object[1];"
+                		+ "\n int num = $3;"
+                		+ "\n for(int i = 0; i<num; i++){"
+                		+ "\n 	paramJsonObj  = new JSONObject();"
+                		+ "\n 	paramWrapperObject[0] = $1[i];"
+                		+ "\n 	paramJsonObj.put($2[i], storeParam(paramWrapperObject, $2[i]).get($2[i]));" 
+                		+ "\n 	paramArr.add(paramJsonObj);}"
+                		+ "\n return paramArr;"
+                	    + "\n }";
+                
+                /*public static JSONObject storeParam(Object[] param ($1) , String paramCast ($2) )*/
+                
+                String storeParam = "{"
+    					+ "\n Object paramObj = $1[0];"
+    					+ "\n JSONObject jsonParam = new JSONObject();"
+    					+ "\n if($2.equals(\"void\")){"
+    					+ "\n 	jsonParam.put(\"void\", null);"
+    					+ "\n 	return jsonParam;"
+    					+ "\n }"
+    					+ "\n String paramCanonicalName = paramObj.getClass().getCanonicalName();"
+    					+ "\n if(ifPrimitive(paramCanonicalName)){"
+    					+ "\n 	String value = Arrays.deepToString($1);"
+    					+ "\n 	jsonParam.put($2, value.substring(1,value.length()-1));"
+    					+ "\n }"
+    					+ "\n else{"
+    					+ "\n 	if(paramCanonicalName.contains(\"Set\") || paramCanonicalName.contains(\"List\")){"
+    					+ "\n 		jsonParam.put($2, storeList((Collection)paramObj));"
+    					+ "\n 	}"
+    					+ "\n 	else if(paramCanonicalName.contains(\"Map\")){"
+    					+ "\n 		jsonParam.put($2, storeMap((Map)paramObj));"
+    					+ "\n 	}"
+    					+ "\n 	else if(paramCanonicalName.contains(\"[]\")){"
+    					+ "\n 		jsonParam.put($2, storeObjectArray((Object[])paramObj));"
+    					+ "\n 	}"
+    					+ "\n 	else{"
+    					+ "\n 		jsonParam.put($2, storeObject(paramObj));"
+    					+ "\n 	}"	
+    					+ "\n }"
+    					+ "\n return jsonParam;"
+    					+ "\n }";       
+                
+                /* public static JSONArray storeObjectArray(Object[] obj ($1) ) */
+               
+                String storeObjects = "{"
+                					+ "\n JSONArray jArr = new JSONArray();"
+                					+ "\n if($1[0].getClass().getComponentType()!=null){"
+                					+ "\n 	 jArr.add(storeObjectArray((Object[])$1[0]));"
+                					+ "\n }"
+                					+ "\n else{"
+                					+ "\n 	for(int i =0; i<$1.length; i++){" 
+                					+ "\n 		jArr.add(storeObject($1[i]));"
+                					+ "\n 	}"
+                					+ "\n }"
+                					+ "\n return jArr;"
+                					+ "\n }";
+                
+                /*public static JSONObject storeObject(Object obj ($1) );*/
+                
+                String storeObject = "{"
+									+ "\n JSONObject jsonObj = new JSONObject();"
+									+ "\n Class c = $1.getClass();"
+									+ "\n Field[] fields = c.getDeclaredFields();"
+									+ "\n for(int i =0; i<fields.length; i++){"
+									+ "\n	Object[] fieldValue = new Object[1];"
+									+ "\n	fields[i].setAccessible(true);"
+									+ "\n	fieldValue[0] = fields[i].get($1);"
+									+ "\n 	String paramType =  fields[i].getType().getCanonicalName() + \"--\" + fields[i].getName();"
+									+ "\n 	jsonObj.put(paramType, storeParam(fieldValue,paramType).get(paramType));"
+									+ "\n }"
+									+ "\n return jsonObj;"
+									+ "\n }";
+                
+                /*public static JSONArray storeMap(Map map ($1) )*/
+                
+                String storeMap = "{"
+			    					+ "\n JSONArray jArr = new JSONArray();"
+			    					+ "\n JSONObject jObj;"
+			    					+ "\n Iterator itr = $1.keySet().iterator();"
+			    					+ "\n Object[] keyObj = new Object[1];"
+			    					+ "\n Object[] value = new Object[1];"
+			    					+ "\n while(itr.hasNext()){"
+			    					+ "\n 	jObj = new JSONObject();"
+			    					+ "\n 	Object key = itr.next();"
+			    					+ "\n 	keyObj[0] = key;"
+			    					+ "\n 	value[0] = $1.get(key);"
+			    					+ "\n 	jObj.put(\"key\", storeParam(keyObj, key.getClass().getSimpleName()));"
+			    					+ "\n 	jObj.put(\"value\", storeParam(value, value[0].getClass().getSimpleName()));"
+			    					+ "\n 	jArr.add(jObj);"
+			    					+ "\n }"
+			    					+ "\n return jArr;"
+			    					+ "\n }"
+			    					+ "\n ";
+                
+                /*public static JSONArray storeList(Collection list)*/
+
+                String storeList = "{"
+                					+ "\n JSONArray jArr = new JSONArray();"
+                					+ "\n Iterator itr = $1.iterator();"
+                					+ "\n Object[] param = new Object[1];"
+                					+ "\n while(itr.hasNext()){"
+                					+ "\n 	param[0] = itr.next();"
+                					+ "\n 	jArr.add(storeParam(param, param[0].getClass().getSimpleName()));"
+                					+ "\n }"
+                					+ "\n return jArr;"
+                					+ "\n }"
+                					+ "\n ";
+
+                /*public static abstract boolean ifArray(Object obj  ($1) )*/
+                
+                String ifArrMethod = "{"
+								    + "\n 	Class c = $1.getClass();"
+								   	+ "\n	return c.getCanonicalName().contains(\"[]\");}";
+		
                 String storeObjectAbstract = "public static abstract JSONObject storeObject(Object obj);";
                 String storeObjectsAbstract = "public static abstract JSONArray storeObjectArray(Object[] obj);";
                 String ifArrAbstract = "public static abstract boolean ifArray(Object obj);";
