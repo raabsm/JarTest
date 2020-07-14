@@ -1,0 +1,83 @@
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.awt.List;
+import java.io.File;
+import org.apache.commons.io.FileUtils;
+import java.util.ArrayList;
+import java.util.HashMap;
+{import_statement}
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class MockClassTest {
+	 HashMap<String, Object[]> map = new HashMap<String,Object[]>();
+	 
+	 public readDataFile(){
+		 File file = new File({dataFileName});
+		 ArrayList<String> lines = FileUtils.readLines(file, "UTF8");
+		 for(String line: lines){
+			if(line.length() > 0){
+				int beginIndex = line.indexOf("") 
+			}
+		 }
+
+		 
+		 
+	 }
+	 
+	 public void testSerlizedParamaters(){
+	    	while({serFileName}.length() > 0) {
+	    		System.out.println("name of class: " + nameOfClass);
+	    		File f = new File({serFileName});
+	    		if(f.length() == 0)
+	    			continue;
+		    	try{
+		    	FileInputStream fileInputStream= new FileInputStream(key);
+			    ObjectInputStream objectInputStream= new ObjectInputStream(fileInputStream);
+			    Object[] input = (Object[]) objectInputStream.readObject();
+			    for(Object obj: input){
+			    	System.out.println("printing serialized params from " + key + ":" + obj.toString());
+			    }
+			    objectInputStream.close(); 
+			    System.out.println(methodMap.get(key));
+			    FileInputStream fis = new FileInputStream(methodMap.get(key));
+			    ObjectInputStream ois= new ObjectInputStream(fis);
+			    Object[] paramsAndReturn = (Object[]) ois.readObject();
+			    System.out.println(paramsAndReturn.length);
+			    for(Object obj: paramsAndReturn){
+			    	if(obj == null)
+			    		System.out.println("null");
+			    	else
+			    		System.out.println("params and return " + methodMap.get(key) + ":" + obj.toString());
+			    }
+			    ois.close();
+		    	}
+		    	catch(IOException | ClassNotFoundException  c){
+					c.printStackTrace();
+		    		System.out.println("failed to read file");
+				}
+	    	}
+	    }
+	
+	
+	
+	
+	{className} cls;
+	@Before
+	public void setUp(){
+
+		cls = mock({className}.class);
+		
+	}
+	
+	@Test
+	public void testPerform(){
+		{mockcalls}
+
+		
+	}
+	
+}

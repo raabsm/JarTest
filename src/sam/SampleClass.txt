@@ -1,5 +1,0 @@
-
-class name: sam.SampleClass| methodName: method1| params: ["hello", 5]	paramtypes[java.lang.String, java.lang.Integer]
-class name: sam.SampleClass| methodName: method2| params: [[hello, goodbye], 0, sam.ExampleClass@71a1a5f3]	paramtypes[Array java.lang.String, java.lang.Integer, sam.ExampleClass]
-class name: sam.SampleClass| methodName: method1| params: ["hello", 5]	paramtypes[java.lang.String, java.lang.Integer]
-class name: sam.SampleClass| methodName: method2| params: [[hello, goodbye], 0, sam.ExampleClass@41639ff]	paramtypes[Array java.lang.String, java.lang.Integer, sam.ExampleClass]
